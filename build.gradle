@@ -1,0 +1,18 @@
+plugins {
+    id 'java'
+}
+
+group 'net.emustudio'
+version '0.40-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'http://emustudio.sf.net/repository/'
+    }
+}
+
+dependencies {
+    implementation 'net.sf.emustudio:emuLib:9.0.1'
+    implementation 'junit:junit:4.12'
+}
