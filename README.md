@@ -1,54 +1,95 @@
 # CPU Test Suite
+![cpu-testsuite](https://github.com/emustudio/cpu-testsuite/workflows/cpu-testsuite/badge.svg?branch=master)
 
-CPU Test Suite is a general unit-testing framework, usable for testing emuStudio CPU plug-ins. It aims to automate as
-much mechanical jobs as possible, and to allow declarative specification of tests. Some ideas were inspired from
-project ["QuickCheck"](https://github.com/pholser/junit-quickcheck), like generating test cases.
+General unit-testing framework intended for testing emuStudio CPU plug-ins. More specifically, it allows to test correctness of the implementation of CPU instructions. Tests are specified in a declarative way; specific test cases are generated based on the declarative specification.
 
-# Features
+The idea of generating test cases was inspired by ["QuickCheck"](https://github.com/pholser/junit-quickcheck) project.
 
-- Generate test cases for instructions needed values (8-bit, 16-bit, unary, binary) 
-- Using Builder pattern for declarative specification of tests
-- Automatic set-up of the environment (fill memory with program, set up initial CPU flags or registers)
+### Features
 
-# Usage
+- Generates test cases for values (8-bit, 16-bit, unary, binary) 
+- Tests are specified using Builder pattern
+- Automatic environment setup (e.g. fill memory with a program, set up initial CPU flags, or set up registers)
 
-If you are using Maven, the best would be to include this as test dependency in your CPU plug-in:
+## License
+
+This project is released under [GNU GPL v3](https://www.gnu.org/licenses/gpl-3.0.html) license.
+
+## Usage
+
+For Maven, use:
 
 ```
-  <dependencies>
     <dependency>
-      <groupId>net.sf.emustudio</groupId>
+      <groupId>net.emustudio</groupId>
       <artifactId>cpu-testsuite</artifactId>
-      <version>0.39-SNAPSHOT</version>
+      <version>0.40-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
-  </dependencies>
 ```
 
-# When to use CPU Test Suite
+For Gradle, use:
 
-This project can be used for testing CPU emulators for emuStudio, which fulfill the following requirements:
+```
+    testImplementation 'net.emustudio:cpu-testsuite:0.40-SNAPSHOT'
+```
 
-- operating memory is a collection of linearly ordered cells
+## When to use CPU Test Suite
+
+The suite can be used for testing CPU plugins for emuStudio only if the following requirements are fulfiled:
+
+- operating memory, used by the CPU, is a collection of linearly ordered cells
 - operating memory cell type is `Short` or `Byte`
 - CPU is using little endian
-- CPU has a program counter register (or "instruction pointer") or similar
+- CPU has a program counter register (or "instruction pointer") or something similar
 - Instruction operands are either `Byte` (8-bit) or `Integer` (16-bit)
 
 # Getting started
 
-Here are presented some code snippets, to let you imagine how CPU Test Suite works. 
+In order to help you get started, this section shows and describes some code snippets. 
 
-NOTE: Realize that instructions in CPU always operate either on a state or with some data. The main idea of testing
-      instructions is to verify the correctness of the instruction evaluation, by checking the output of the instruction,
-      regardless it is stored as internal CPU state, or in a register, or in memory.
+Instructions of a CPU operate either with a CPU state or with some data (registers or memory). When we say
+we are "testing an instruction", we mean by this a verification of the correctness of instruction evaluation.
+The process is as follows:
 
-Imagine we have 8080 CPU, and we want to test instruction `SUB`. The test might look as follows:
+1. Setup the initial CPU state and environment (register values, memory cell values, flags)
+2. Run the instruction
+3. Check the output - CPU state, register(s), flags, or memory.
 
-```Java
-import static net.sf.emustudio.cpu.testsuite.Generator.*;
+Let's use 8080 CPU for now, and let's test the `SUB` instruction. The test might look as follows:
+
+```java
+import static net.emustudio.cpu.testsuite.Generator.*;
+import net.emustudio.cpu.testsuite.memory.ShortMemoryStub;
+import net.emustudio.intel8080.impl.suite.CpuRunnerImpl;
+import net.emustudio.intel8080.impl.suite.CpuVerifierImpl;
+import org.junit.After;
+import org.junit.Before;
+
 
 public class CpuTest {
+    private CpuRunnerImpl cpuRunnerImpl;
+    private CpuVerifierImpl cpuVerifierImpl;
+    private CpuImpl cpu;
+
+    @Before
+    public void setUp() throws PluginInitializationException {
+        ShortMemoryStub memoryStub = new ShortMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+
+        cpu = new CpuImpl(...);
+        // simulate emuStudio boot
+        cpu.initialize(...);
+
+        cpuRunnerImpl = new CpuRunnerImpl(cpu, memoryStub);
+        cpuVerifierImpl = new CpuVerifierImpl(cpu, memoryStub);
+
+        Generator.setRandomTestsCount(10);
+    }
+    
+    @After
+    public void tearDown() {
+        cpu.destroy();
+    }
     
     @Test
     public void testSUB() throws Exception {
@@ -74,8 +115,8 @@ public class CpuTest {
 }
 ```
 
-At first, we need to know, if we will operate with bytes or integers (words). Therefore we create new `ByteTestBuilder`
-for testing `SUB`. There exists also `IntegerTestBuilder` class for operating with 16-bit values.
+It might seem complex, but all makes sense. At first, we need to know, if we operate with bytes or integers (words).
+Therefore, we create new `ByteTestBuilder`. There exists also `IntegerTestBuilder` class for operating with 16-bit values.
 
 Instruction `SUB` takes 1 argument - the register, e.g. `SUB B`, which substracts register `B` from register `A`.
 In other words:
@@ -87,7 +128,7 @@ SUB B = A - B
 Generally, instruction `SUB` will always be evaluated as `A - register`. Therefore we know, that first operand is always
 register `A`:
 
-```Java
+```java
    .firstIsRegister(REG_A)
 ```
 
@@ -96,7 +137,7 @@ NOTE: Constant `REG_A` is defined in our 8080 CPU.
 That's it for preparing the environment. Now, we want to verify, that after performing the "subtract" operation,
 we get result in register `A` with the correct value:
 
-```Java
+```java
     .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF))
 ```
 
@@ -108,7 +149,7 @@ NOTE: Here, you must be very careful; if you write the computation wrongly, the 
     
 Also, the instruction is affecting flags in CPU. It is enough to specify that with the following statement:
  
-```Java
+```java
     .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity())
 ```
  
@@ -121,7 +162,7 @@ And we're almost done with the test specification. Now, we must say that after w
 the environment we set up before (in our case setting that the first operand will be stored in register `A` - before
 the operation). We do this with line:
  
-```Java
+```java
     .keepCurrentInjectorsAfterRun();
 ```
 
@@ -129,7 +170,7 @@ And now, we can 'generate' tests for various random-generated combinations of op
 of the suite, and frees us from creating manual examples of the instruction input and output data. It saves a lot of
 time. We just say:
 
-```Java
+```java
 Generator.forSome8bitBinaryWhichEqual(
         test.run(0x97)
 );
@@ -148,7 +189,7 @@ So in order to have valid test, and we have binary values from generator (we nee
 
 The final part of the test is much more obvious:
 
-```
+```java
 Generator.forSome8bitBinary(
         test.secondIsRegister(REG_B).run(0x90),
         test.secondIsRegister(REG_C).run(0x91),
@@ -174,6 +215,3 @@ SUB M = A - [HL]
 
 For more information, see Javadoc of the project, and real usage in available emuStudio CPU plug-ins.
     
-# License
-
-This project is released under GNU GPL v2 license.
