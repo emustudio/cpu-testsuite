@@ -9,9 +9,6 @@ version '0.40-SNAPSHOT'
 
 repositories {
     mavenCentral()
-    maven {
-        url 'http://emustudio.sf.net/repository/'
-    }
 }
 
 dependencies {
