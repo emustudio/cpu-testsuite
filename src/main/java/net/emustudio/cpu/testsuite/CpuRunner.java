@@ -28,23 +28,31 @@ import java.util.Objects;
 
 import static org.junit.Assert.assertEquals;
 
+/**
+ * CPU Runner.
+ *
+ * This class is a wrapper around CPU and memory, and contains the environment for test execution.
+ * @param <TCpu> CPU type
+ */
 @SuppressWarnings("unused")
-public abstract class CpuRunner<CpuType extends CPU> {
+public abstract class CpuRunner<TCpu extends CPU> {
+    public int MIN_MEMORY_SIZE = 65536;
+    
     private final RunStateListenerStub runStateListener = new RunStateListenerStub();
-    protected final CpuType cpu;
+    protected final TCpu cpu;
     protected final MemoryStub<?> memoryStub;
 
     private short[] program = new short[1];
     private CPU.RunState expectedRunState = CPU.RunState.STATE_STOPPED_BREAK;
 
-    public CpuRunner(CpuType cpu, MemoryStub<?> memoryStub) {
+    public CpuRunner(TCpu cpu, MemoryStub<?> memoryStub) {
         this.cpu = Objects.requireNonNull(cpu);
         this.memoryStub = Objects.requireNonNull(memoryStub);
         cpu.addCPUListener(runStateListener);
     }
 
     public void ensureProgramSize(int length) {
-        length = Math.max(length, 65536);
+        length = Math.max(length, MIN_MEMORY_SIZE);
         if (program.length < length) {
             this.program = Arrays.copyOf(this.program, length);
             resetProgram();

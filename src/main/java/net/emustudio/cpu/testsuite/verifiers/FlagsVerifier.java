@@ -29,7 +29,7 @@ import java.util.function.Function;
 /**
  * Flags verifier.
  *
- * Used as a test verifier.
+ * Used as test verifier.
  *
  * @param <TOperand> operands type (Byte or Integer)
  */

@@ -25,6 +25,12 @@ import java.util.Objects;
 
 import static org.junit.Assert.assertEquals;
 
+/**
+ *CPU Verifier.
+ *
+ * Used for checking the result (registers, flags, memory) after test execution.
+ */
+@SuppressWarnings("unchecked")
 public abstract class CpuVerifier {
     protected final MemoryStub<? extends Number> memoryStub;
 

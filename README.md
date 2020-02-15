@@ -41,20 +41,36 @@ The suite can be used for testing CPU plugins for emuStudio only if the followin
 - operating memory, used by the CPU, is a collection of linearly ordered cells
 - operating memory cell type is `Short` or `Byte`
 - CPU is using little endian
-- CPU has a program counter register (or "instruction pointer") or something similar
+- CPU has a program counter register (or "instruction pointer") or similar
+- CPU has a stack pointer register
 - Instruction operands are either `Byte` (8-bit) or `Integer` (16-bit)
 
 # Getting started
 
 In order to help you get started, this section shows and describes some code snippets. 
 
-Instructions of a CPU operate either with a CPU state or with some data (registers or memory). When we say
+CPU instructions operate either with a CPU state or with some data (registers or memory). When we say
 we are "testing an instruction", we mean by this a verification of the correctness of instruction evaluation.
-The process is as follows:
+The testing process is as follows:
 
-1. Setup the initial CPU state and environment (register values, memory cell values, flags)
+1. Setup the initial CPU state and environment (register values, memory cell values, flags) - usually generate it
+   according to some rules
 2. Run the instruction
 3. Check the output - CPU state, register(s), flags, or memory.
+4. Repeat for another test case
+
+Each CPU is different. Therefore, the test suite needs specific implementations of several interfaces (or abstract classes):
+
+- custom implementation of `CpuRunner` abstract class (the virtual computer)
+- custom implementation of `CpuVerifier` abstract class
+
+Those should be instantiated before each test (tests will make them "dirty"). Then, within the JUnit test, the next
+step is to create a "test builder" instance (provided by this framework), which uses the `CpuRunner` and `CpuVerifier`
+objects. 
+
+Optionally, to be able to verify CPU flags, the plugin might want to implement `FlagsCheck` abstract class, which will
+compute flags based on the result and the `RunnerContext` object, which represents the previous environment state
+(first operand, second operand, flags, PC, SP, and possibly other registers).
 
 Let's use 8080 CPU for now, and let's test the `SUB` instruction. The test might look as follows:
 
@@ -83,7 +99,7 @@ public class CpuTest {
         cpuRunnerImpl = new CpuRunnerImpl(cpu, memoryStub);
         cpuVerifierImpl = new CpuVerifierImpl(cpu, memoryStub);
 
-        Generator.setRandomTestsCount(10);
+        Generator.setRandomTestsCount(10); // How many test cases should be generated
     }
     
     @After
@@ -92,7 +108,8 @@ public class CpuTest {
     }
     
     @Test
-    public void testSUB() throws Exception {
+    public void testSUB() {
+        // ByteTestBuilder specifies that instruction operands are bytes 
         ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
                 .firstIsRegister(REG_A)
                 .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF))
@@ -214,4 +231,3 @@ SUB M = A - [HL]
 ```
 
 For more information, see Javadoc of the project, and real usage in available emuStudio CPU plug-ins.
-    
