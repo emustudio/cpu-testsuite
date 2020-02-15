@@ -35,7 +35,7 @@ import java.util.function.Function;
 
 @SuppressWarnings({"unused", "unchecked"})
 public abstract class TestBuilder<OperandT extends Number, TestBuilderT extends TestBuilder,
-        RunnerT extends CpuRunner, VerifierT extends CpuVerifier> {
+        RunnerT extends CpuRunner<?>, VerifierT extends CpuVerifier> {
     protected final RunnerT cpuRunner;
     protected final VerifierT cpuVerifier;
     protected final TestRunner<RunnerT, OperandT> runner;
@@ -83,12 +83,12 @@ public abstract class TestBuilder<OperandT extends Number, TestBuilderT extends 
         return (TestBuilderT)this;
     }
 
-    public TestBuilderT verifyFlags(FlagsCheck flagsCheck, Function<RunnerContext<OperandT>, Integer> operator) {
+    public TestBuilderT verifyFlags(FlagsCheck<?, ?> flagsCheck, Function<RunnerContext<OperandT>, Integer> operator) {
         lastOperation = operator;
         return verifyFlagsOfLastOp(flagsCheck);
     }
 
-    public TestBuilderT verifyFlagsOfLastOp(FlagsCheck flagsCheck) {
+    public TestBuilderT verifyFlagsOfLastOp(FlagsCheck<?, ?> flagsCheck) {
         if (lastOperation == null) {
             throw new IllegalStateException("Last operation is not set!");
         }
@@ -105,7 +105,7 @@ public abstract class TestBuilder<OperandT extends Number, TestBuilderT extends 
     public TestBuilderT verifyWord(Function<RunnerContext<OperandT>, Integer> addressOperator,
                                    Function<RunnerContext<OperandT>, Integer> operator) {
         lastOperation = operator;
-        runner.verifyAfterTest(new MemoryWordVerifier(cpuVerifier, operator, addressOperator));
+        runner.verifyAfterTest(new MemoryWordVerifier<OperandT>(cpuVerifier, operator, addressOperator));
         return (TestBuilderT)this;
     }
 

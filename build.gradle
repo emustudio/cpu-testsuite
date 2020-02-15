@@ -1,5 +1,7 @@
 plugins {
-    id 'java'
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
 }
 
 group 'net.emustudio'
@@ -15,4 +17,61 @@ repositories {
 dependencies {
     implementation 'net.sf.emustudio:emuLib:9.0.1'
     implementation 'junit:junit:4.12'
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'cpu-testsuite'
+            from components.java
+            pom {
+                name = 'CPU Test Suite'
+                description = 'Generic test suite for comfortable CPU unit testing'
+                url = 'https://github.com/emustudio/cpu-testsuite'
+                licenses {
+                    license {
+                        name = 'GNU General Public License, Version 3.0'
+                        url = 'https://www.gnu.org/licenses/gpl-3.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'vbmacher'
+                        name = 'Peter Jakubčo'
+                        email = 'pjakubco@gmail.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git@github.com:emustudio/cpu-testsuite.git'
+                    developerConnection = 'scm:git:git@github.com:emustudio/cpu-testsuite.git'
+                    url = 'https://github.com/emustudio/cpu-testsuite'
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            url "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+            credentials {
+                username System.getenv("SONATYPE_USERNAME")
+                password System.getenv("SONATYPE_PASSWORD")
+            }
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.mavenJava
+}
+
+javadoc {
+    if(JavaVersion.current().isJava9Compatible()) {
+        options.addBooleanOption('html5', true)
+    }
 }

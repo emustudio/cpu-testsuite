@@ -32,6 +32,7 @@ public class Generator {
         Generator.randomTests = randomTests;
     }
 
+    @SafeVarargs
     public static void forAll8bitBinary(BiConsumer<Byte, Byte>... runners) {
         for (int i = 0; i < 256; i++) {
             for (int j = i; j < 256; j++) {
@@ -42,6 +43,7 @@ public class Generator {
         }
     }
 
+    @SafeVarargs
     public static void forSome8bitBinary(BiConsumer<Byte, Byte>... runners) {
         Random random = new Random();
         for (int k = 0; k < randomTests; k++) {
@@ -51,6 +53,7 @@ public class Generator {
         }
     }
 
+    @SafeVarargs
     public static void forAll8bitBinaryWhichEqual(BiConsumer<Byte, Byte>... runners) {
         for (int i = 0; i < 256; i++) {
             for (BiConsumer<Byte, Byte> runner : runners) {
@@ -59,6 +62,7 @@ public class Generator {
         }
     }
 
+    @SafeVarargs
     public static void forSome8bitBinaryWhichEqual(BiConsumer<Byte, Byte>... runners) {
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
@@ -69,6 +73,7 @@ public class Generator {
         }
     }
 
+    @SafeVarargs
     public static void forSome16bitBinary(int firstStartFrom, int secondStartFrom, BiConsumer<Integer, Integer>... runners) {
         if (firstStartFrom > MAX_OPERAND_SIZE) {
             throw new IllegalArgumentException("First start from must be <= " + MAX_OPERAND_SIZE);
@@ -93,10 +98,12 @@ public class Generator {
         }
     }
 
+    @SafeVarargs
     public static void forSome16bitBinary(int firstStartFrom, BiConsumer<Integer, Integer>... runners) {
         forSome16bitBinary(firstStartFrom, 0, runners);
     }
 
+    @SafeVarargs
     public static void forSome16bitBinaryFirstSatisfying(Predicate<Integer> predicate,
                                                          BiConsumer<Integer, Integer>... runners) {
         Random random = new Random();
@@ -111,8 +118,9 @@ public class Generator {
         }
     }
 
+    @SafeVarargs
     public static void forSome16bitBinaryBothSatisfying(Predicate<Integer> firstP, Predicate<Integer> secondP,
-                                                         BiConsumer<Integer, Integer>... runners) {
+                                                        BiConsumer<Integer, Integer>... runners) {
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
@@ -129,6 +137,7 @@ public class Generator {
         }
     }
 
+    @SafeVarargs
     public static void forSome16bitBinary(BiConsumer<Integer, Integer>... runners) {
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
@@ -138,31 +147,7 @@ public class Generator {
         }
     }
 
-    private static int adjustInteger(int value) {
-        if (value > 100 && value < 32000) {
-            return 32900;
-        }
-        if (value > 33000 && value < 65000) {
-            return  65500;
-        }
-        return value;
-    }
-
-    /**
-     * Select values: 0-100, 32900-33000, and 65500-65535
-     */
-    public static void forAdjusted16bitBinary(int firstStartFrom, BiConsumer<Integer, Integer>... runners) {
-        for (int first = firstStartFrom; first < MAX_OPERAND_SIZE; first++) {
-            for (int second = 0; second < MAX_OPERAND_SIZE; second++) {
-                for (BiConsumer<Integer, Integer> runner : runners) {
-                    runner.accept(first, second);
-                }
-                second = adjustInteger(second);
-            }
-            first = adjustInteger(first);
-        }
-    }
-
+    @SafeVarargs
     public static void forSome16bitBinaryWhichEqual(BiConsumer<Integer, Integer>... runners) {
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
@@ -173,6 +158,7 @@ public class Generator {
         }
     }
 
+    @SafeVarargs
     public static void forAll8bitUnary(BiConsumer<Byte, Byte>... runners) {
         for (int i = 0; i < 256; i++) {
             for (BiConsumer<Byte, Byte> runner : runners) {
@@ -181,6 +167,7 @@ public class Generator {
         }
     }
 
+    @SafeVarargs
     public static void forSome8bitUnary(BiConsumer<Byte, Byte>... runners) {
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
@@ -191,10 +178,12 @@ public class Generator {
         }
     }
 
+    @SafeVarargs
     public static void forSome16bitUnary(BiConsumer<Integer, Integer>... runners) {
         forSome16bitUnary(0, runners);
     }
 
+    @SafeVarargs
     public static void forSome16bitUnary(int firstStartFrom, BiConsumer<Integer, Integer>... runners) {
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
@@ -211,6 +200,7 @@ public class Generator {
         }
     }
 
+    @SafeVarargs
     public static void forAll16bitUnary(int firstStartFrom, BiConsumer<Integer, Integer>... runners) {
         if (firstStartFrom > MAX_OPERAND_SIZE) {
             throw new IllegalArgumentException("First start from must be <=" + MAX_OPERAND_SIZE);
@@ -223,12 +213,14 @@ public class Generator {
         }
     }
 
+    @SafeVarargs
     public static <T extends Number> void forGivenOperandsAndSingleRun(T operand, BiConsumer<T, T>... runners) {
         for (BiConsumer<T,T> runner : runners) {
             runner.accept(operand, operand);
         }
     }
 
+    @SafeVarargs
     public static <T extends Number> void forGivenOperandsAndSingleRun(T first, T second, BiConsumer<T, T>... runners) {
         for (BiConsumer<T,T> runner : runners) {
             runner.accept(first, second);

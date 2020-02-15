@@ -229,7 +229,6 @@ public class TestRunner<T extends CpuRunner, OperandType extends Number> impleme
      *
      * @param first first operand
      * @param second second operand
-     * @return runner context before test execution.
      */
     @Override
     public void accept(OperandType first, OperandType second) {

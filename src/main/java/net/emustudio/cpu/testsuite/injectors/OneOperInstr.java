@@ -37,9 +37,9 @@ import java.util.function.BiConsumer;
  * @param <RunnerT> type of the CpuRunner
  * @param <OperandT> type of operand (Byte or Integer)
  */
-public class OneOperInstr<RunnerT extends CpuRunner, OperandT extends Number> implements BiConsumer<RunnerT, OperandT> {
+public class OneOperInstr<RunnerT extends CpuRunner<?>, OperandT extends Number> implements BiConsumer<RunnerT, OperandT> {
 
-    private final DefaultProgramGenerator strategy = new DefaultProgramGenerator();
+    private final DefaultProgramGenerator<OperandT> strategy = new DefaultProgramGenerator<>();
 
     /**
      * Create instruction with single operand injector.
@@ -56,9 +56,9 @@ public class OneOperInstr<RunnerT extends CpuRunner, OperandT extends Number> im
      * NOTE: size of operands is given by OperandType parameter (Byte = 8 bits, Integer = 16 bits)
      *
      * @param opcodes opcode(s). Each opcode must be a byte (don't get confused by int).
-     * @return
+     * @return this
      */
-    public OneOperInstr placeOpcodesAfterOperand(int... opcodes) {
+    public OneOperInstr<RunnerT, OperandT> placeOpcodesAfterOperand(int... opcodes) {
         strategy.addOpcodesAfterOperands(opcodes);
         return this;
     }

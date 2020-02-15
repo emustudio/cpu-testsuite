@@ -32,7 +32,8 @@ public class DefaultProgramGenerator<OperandT extends Number> {
         this.opcodes.addAll(intArrayToList(opcodes));
     }
 
-    public void setOperands(OperandT... operands) {
+    @SafeVarargs
+    public final void setOperands(OperandT... operands) {
         this.operands.addAll(Arrays.asList(operands));
     }
 
@@ -49,9 +50,8 @@ public class DefaultProgramGenerator<OperandT extends Number> {
     }
 
     public List<Short> generate() {
-        List<Short> program = new ArrayList<>();
 
-        program.addAll(opcodes);
+        List<Short> program = new ArrayList<>(opcodes);
         for (OperandT operand : operands) {
             if (operand instanceof Byte) {
                 program.add((short)(operand.byteValue() & 0xFF));
