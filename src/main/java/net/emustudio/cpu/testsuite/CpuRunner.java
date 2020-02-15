@@ -19,7 +19,6 @@
 package net.emustudio.cpu.testsuite;
 
 import emulib.plugins.cpu.CPU;
-import emulib.plugins.memory.MemoryContext;
 import net.emustudio.cpu.testsuite.internal.RunStateListenerStub;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
 
@@ -33,12 +32,12 @@ import static org.junit.Assert.assertEquals;
 public abstract class CpuRunner<CpuType extends CPU> {
     private final RunStateListenerStub runStateListener = new RunStateListenerStub();
     protected final CpuType cpu;
-    protected final MemoryStub memoryStub;
+    protected final MemoryStub<?> memoryStub;
 
     private short[] program = new short[1];
     private CPU.RunState expectedRunState = CPU.RunState.STATE_STOPPED_BREAK;
 
-    public CpuRunner(CpuType cpu, MemoryStub memoryStub) {
+    public CpuRunner(CpuType cpu, MemoryStub<?> memoryStub) {
         this.cpu = Objects.requireNonNull(cpu);
         this.memoryStub = Objects.requireNonNull(memoryStub);
         cpu.addCPUListener(runStateListener);
@@ -68,10 +67,6 @@ public abstract class CpuRunner<CpuType extends CPU> {
             array[i++] = n.intValue();
         }
         setProgram(array);
-    }
-
-    public MemoryContext<Short> getMemory() {
-        return memoryStub;
     }
 
     public void setProgram(short... program) {

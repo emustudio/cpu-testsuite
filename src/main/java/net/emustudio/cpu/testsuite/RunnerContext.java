@@ -21,7 +21,6 @@ package net.emustudio.cpu.testsuite;
 import net.emustudio.cpu.testsuite.injectors.internal.Utils;
 import net.jcip.annotations.Immutable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -30,13 +29,13 @@ import java.util.List;
  *
  * It is used by injectors and verifiers.
  *
- * @param <OperandType> type of the operands (Byte or Integer)
+ * @param <TOperand> type of the operands (Byte or Integer)
  */
 @SuppressWarnings("unused")
 @Immutable
-public class RunnerContext<OperandType extends Number> {
-    public final OperandType first;
-    public final OperandType second;
+public class RunnerContext<TOperand extends Number> {
+    public final TOperand first;
+    public final TOperand second;
 
     public final int flags;
     public final int PC;
@@ -54,14 +53,14 @@ public class RunnerContext<OperandType extends Number> {
      * @param registers values of some CPU registers before test execution (which registers are there is up to
      *                  CpuRunner implementation)
      */
-    public RunnerContext(OperandType first, OperandType second, int flags, int PC, int SP, List<Integer> registers) {
+    public RunnerContext(TOperand first, TOperand second, int flags, int PC, int SP, List<Integer> registers) {
         this.first = first;
         this.second = second;
         this.flags = flags;
         this.PC = PC;
         this.SP = SP;
 
-        this.registers = Collections.unmodifiableList(new ArrayList<>(registers));
+        this.registers = List.copyOf(registers);
     }
 
     /**
@@ -73,7 +72,7 @@ public class RunnerContext<OperandType extends Number> {
      * @param second second operand (if not used, 0)
      * @param flags flags before test execution
      */
-    public RunnerContext(OperandType first, OperandType second, int flags) {
+    public RunnerContext(TOperand first, TOperand second, int flags) {
         this(first, second, flags, 0, 0, Collections.emptyList());
     }
 
@@ -83,7 +82,7 @@ public class RunnerContext<OperandType extends Number> {
      *
      * @return new runner context with switched first and second operand
      */
-    public RunnerContext<OperandType> switchFirstAndSecond() {
+    public RunnerContext<TOperand> switchFirstAndSecond() {
         return new RunnerContext<>(second, first, flags, PC, SP, registers);
     }
 

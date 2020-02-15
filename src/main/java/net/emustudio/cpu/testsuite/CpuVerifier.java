@@ -28,7 +28,7 @@ import static org.junit.Assert.assertEquals;
 public abstract class CpuVerifier {
     protected final MemoryStub<? extends Number> memoryStub;
 
-    public CpuVerifier(MemoryStub memoryStub) {
+    public CpuVerifier(MemoryStub<?> memoryStub) {
         this.memoryStub = Objects.requireNonNull(memoryStub);
     }
 

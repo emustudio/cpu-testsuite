@@ -30,8 +30,8 @@ import java.util.function.Consumer;
  *
  * Can have 1 or more opcodes.
  */
-public class NoOperInstr<T extends CpuRunner> implements Consumer<T> {
-    private final DefaultProgramGenerator strategy = new DefaultProgramGenerator();
+public class NoOperInstr<TCpuRunner extends CpuRunner<?>> implements Consumer<TCpuRunner> {
+    private final DefaultProgramGenerator<?> strategy = new DefaultProgramGenerator<>();
 
     /**
      * Creates instruction with no operands injector.
@@ -43,7 +43,7 @@ public class NoOperInstr<T extends CpuRunner> implements Consumer<T> {
     }
 
     @Override
-    public void accept(T cpuRunner) {
+    public void accept(TCpuRunner cpuRunner) {
         cpuRunner.setProgram(strategy.generate());
         strategy.clearOperands();
     }

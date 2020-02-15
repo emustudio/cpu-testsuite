@@ -30,10 +30,11 @@ import java.util.function.BiConsumer;
  * Ensures that memory has at least specified size. The size is injected from TestRunner.
  *
  */
-public class MemoryExpand<T extends CpuRunner> implements BiConsumer<T, Integer> {
+@SuppressWarnings("unused")
+public class MemoryExpand<TCpuRunner extends CpuRunner<?>> implements BiConsumer<TCpuRunner, Integer> {
 
     @Override
-    public void accept(T cpuRunner, Integer address) {
+    public void accept(TCpuRunner cpuRunner, Integer address) {
         cpuRunner.ensureProgramSize(address + 4);
     }
 

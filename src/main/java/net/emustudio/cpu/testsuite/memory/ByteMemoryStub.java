@@ -20,6 +20,8 @@ package net.emustudio.cpu.testsuite.memory;
 
 import emulib.plugins.memory.Memory;
 
+import java.util.Arrays;
+
 @SuppressWarnings("unused")
 public class ByteMemoryStub implements MemoryStub<Byte> {
     private final int wordReadingStrategy;
@@ -69,9 +71,7 @@ public class ByteMemoryStub implements MemoryStub<Byte> {
 
     @Override
     public void clear() {
-        for (int i = 0; i < memory.length; i++) {
-            memory[i] = 0;
-        }
+        Arrays.fill(memory, (byte) 0);
     }
 
     @Override

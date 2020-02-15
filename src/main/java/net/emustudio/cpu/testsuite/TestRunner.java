@@ -39,17 +39,18 @@ import java.util.function.Consumer;
  * After, the resulting CPU state should be verified by all provided verifiers. Again, all verifiers know
  * what to do. They are using CpuVerifier class for checking the CPU state. They are provided by user.
  *
- * @param <OperandType> operands type (Byte or Integer)
+ * @param <TCpuRunner> CPU Runner type
+ * @param <TOperand> operands type (Byte or Integer)
  */
 @NotThreadSafe
-public class TestRunner<T extends CpuRunner, OperandType extends Number> implements BiConsumer<OperandType, OperandType> {
-    private final T cpuRunner;
+public class TestRunner<TCpuRunner extends CpuRunner<?>, TOperand extends Number> implements BiConsumer<TOperand, TOperand> {
+    private final TCpuRunner cpuRunner;
 
-    private final List<TwoOperInjector<T, OperandType>> injectors = new ArrayList<>();
-    private final List<TwoOperInjector<T, OperandType>> injectorsToKeep = new ArrayList<>();
+    private final List<TwoOperInjector<TCpuRunner, TOperand>> injectors = new ArrayList<>();
+    private final List<TwoOperInjector<TCpuRunner, TOperand>> injectorsToKeep = new ArrayList<>();
 
-    private final List<Consumer<RunnerContext<OperandType>>> verifiers = new ArrayList<>();
-    private final List<Consumer<RunnerContext<OperandType>>> verifiersToKeep = new ArrayList<>();
+    private final List<Consumer<RunnerContext<TOperand>>> verifiers = new ArrayList<>();
+    private final List<Consumer<RunnerContext<TOperand>>> verifiersToKeep = new ArrayList<>();
 
     private int flagsBefore = -1;
     private boolean printInjectingProcess;
@@ -59,7 +60,7 @@ public class TestRunner<T extends CpuRunner, OperandType extends Number> impleme
      *
      * @param cpuRunner CPU runner object (for manipulating CPU state).
      */
-    public TestRunner(T cpuRunner) {
+    public TestRunner(TCpuRunner cpuRunner) {
         this.cpuRunner = Objects.requireNonNull(cpuRunner);
     }
 
@@ -103,8 +104,9 @@ public class TestRunner<T extends CpuRunner, OperandType extends Number> impleme
      * @param injectors injectors requiring only CpuRunner (no operands)
      * @return this
      */
-    public TestRunner<T, OperandType> injectNoOperand(Consumer<T>... injectors) {
-        for (Consumer<T> injector : injectors) {
+    @SafeVarargs
+    public final TestRunner<TCpuRunner, TOperand> injectNoOperand(Consumer<TCpuRunner>... injectors) {
+        for (Consumer<TCpuRunner> injector : injectors) {
             this.injectors.add((cpuRunner, first, second) -> {
                 printInjectionIfEnabled("", injector);
                 injector.accept(cpuRunner);
@@ -121,8 +123,9 @@ public class TestRunner<T extends CpuRunner, OperandType extends Number> impleme
      * @param injectors injectors requiring CpuRunner and a single operand
      * @return this
      */
-    public TestRunner<T, OperandType> injectFirst(BiConsumer<T, OperandType>... injectors) {
-        for (BiConsumer<T, OperandType> injector : injectors) {
+    @SafeVarargs
+    public final TestRunner<TCpuRunner, TOperand> injectFirst(BiConsumer<TCpuRunner, TOperand>... injectors) {
+        for (BiConsumer<TCpuRunner, TOperand> injector : injectors) {
             this.injectors.add((cpuRunner, first, second) -> {
                 printInjectionIfEnabled("first", first, injector);
                 injector.accept(cpuRunner, first);
@@ -139,8 +142,9 @@ public class TestRunner<T extends CpuRunner, OperandType extends Number> impleme
      * @param injectors injectors requiring CpuRunner and a single operand
      * @return this
      */
-    public TestRunner<T, OperandType> injectSecond(BiConsumer<T, OperandType>... injectors) {
-        for (BiConsumer<T, OperandType> injector : injectors) {
+    @SafeVarargs
+    public final TestRunner<TCpuRunner, TOperand> injectSecond(BiConsumer<TCpuRunner, TOperand>... injectors) {
+        for (BiConsumer<TCpuRunner, TOperand> injector : injectors) {
             this.injectors.add((cpuRunner, first, second) -> {
                 printInjectionIfEnabled("second", second, injector);
                 injector.accept(cpuRunner, second);
@@ -158,8 +162,9 @@ public class TestRunner<T extends CpuRunner, OperandType extends Number> impleme
      * @param injectors injectors requiring CpuRunner and two operand
      * @return this
      */
-    public TestRunner<T, OperandType> injectTwoOperands(TwoOperInjector<T, OperandType>... injectors) {
-        for (TwoOperInjector<T, OperandType> injector : injectors) {
+    @SafeVarargs
+    public final TestRunner<TCpuRunner, TOperand> injectTwoOperands(TwoOperInjector<TCpuRunner, TOperand>... injectors) {
+        for (TwoOperInjector<TCpuRunner, TOperand> injector : injectors) {
             this.injectors.add((cpuRunner, first, second) -> {
                 printInjectionIfEnabled("(first,second)", first, second, injector);
                 injector.inject(cpuRunner, first, second);
@@ -203,12 +208,13 @@ public class TestRunner<T extends CpuRunner, OperandType extends Number> impleme
      *
      * @param verifiers array of test verifiers
      */
-    public void verifyAfterTest(Consumer<RunnerContext<OperandType>>... verifiers) {
+    @SafeVarargs
+    public final void verifyAfterTest(Consumer<RunnerContext<TOperand>>... verifiers) {
         Collections.addAll(this.verifiers, verifiers);
     }
 
-    private void verify(RunnerContext<OperandType> context) {
-        verifiers.stream().forEach(verifier -> {
+    private void verify(RunnerContext<TOperand> context) {
+        verifiers.forEach(verifier -> {
             try {
                 verifier.accept(context);
             } catch (Throwable e) {
@@ -231,7 +237,7 @@ public class TestRunner<T extends CpuRunner, OperandType extends Number> impleme
      * @param second second operand
      */
     @Override
-    public void accept(OperandType first, OperandType second) {
+    public void accept(TOperand first, TOperand second) {
         cpuRunner.reset();
 
         // first preserve flags; they may get overwritten by some injector
@@ -239,9 +245,9 @@ public class TestRunner<T extends CpuRunner, OperandType extends Number> impleme
             cpuRunner.setFlags(flagsBefore);
         }
 
-        injectors.stream().forEach(injector -> injector.inject(cpuRunner, first, second));
+        injectors.forEach(injector -> injector.inject(cpuRunner, first, second));
 
-        RunnerContext<OperandType> context = new RunnerContext<>(
+        RunnerContext<TOperand> context = new RunnerContext<>(
                 first, second, cpuRunner.getFlags(), cpuRunner.getPC(), cpuRunner.getSP(), cpuRunner.getRegisters()
         );
 
@@ -251,8 +257,9 @@ public class TestRunner<T extends CpuRunner, OperandType extends Number> impleme
         verify(context);
     }
 
-    public TestRunner<T, OperandType> clone() {
-        TestRunner<T, OperandType> runner = new TestRunner<>(cpuRunner);
+    @Override
+    public TestRunner<TCpuRunner, TOperand> clone() {
+        TestRunner<TCpuRunner, TOperand> runner = new TestRunner<>(cpuRunner);
         runner.flagsBefore = flagsBefore;
 
         runner.injectors.addAll(this.injectors);

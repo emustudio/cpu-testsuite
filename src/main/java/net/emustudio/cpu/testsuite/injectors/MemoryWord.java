@@ -29,7 +29,7 @@ import java.util.function.BiConsumer;
  * Higher than 16-bit value will be truncated.
  *
  */
-public class MemoryWord<T extends CpuRunner, OperandType extends Number> implements BiConsumer<T, OperandType> {
+public class MemoryWord<TCpuRunner extends CpuRunner<?>, TOperand extends Number> implements BiConsumer<TCpuRunner, TOperand> {
     private final int address;
 
     /**
@@ -46,7 +46,7 @@ public class MemoryWord<T extends CpuRunner, OperandType extends Number> impleme
     }
 
     @Override
-    public void accept(T cpuRunner, OperandType value) {
+    public void accept(TCpuRunner cpuRunner, TOperand value) {
         int tmp = value.intValue();
         cpuRunner.setByte(address, tmp & 0xFF);
         cpuRunner.setByte(address + 1, (tmp >>> 8) & 0xFF);

@@ -28,7 +28,7 @@ import java.util.function.BiConsumer;
  * Used for placing given value at memory address injected by TestRunner.
  * Based on the used constructor, it places either Byte or Integer at the injected address.
  */
-public class MemoryAddress<T extends CpuRunner, OperandType extends Number> implements BiConsumer<T, OperandType> {
+public class MemoryAddress<TCpuRunner extends CpuRunner<?>, TOperand extends Number> implements BiConsumer<TCpuRunner, TOperand> {
     private final int value;
     private final boolean word;
 
@@ -53,7 +53,7 @@ public class MemoryAddress<T extends CpuRunner, OperandType extends Number> impl
     }
 
     @Override
-    public void accept(T cpuRunner, OperandType address) {
+    public void accept(TCpuRunner cpuRunner, TOperand address) {
         int tmp = address.intValue();
 
         cpuRunner.setByte(tmp, value & 0xFF);

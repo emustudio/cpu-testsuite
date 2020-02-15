@@ -20,6 +20,8 @@ package net.emustudio.cpu.testsuite.memory;
 
 import emulib.plugins.memory.Memory;
 
+import java.util.Arrays;
+
 @SuppressWarnings("unused")
 public class ShortMemoryStub implements MemoryStub<Short> {
     private final int wordReadingStrategy;
@@ -70,9 +72,7 @@ public class ShortMemoryStub implements MemoryStub<Short> {
 
     @Override
     public void clear() {
-        for (int i = 0; i < memory.length; i++) {
-            memory[i] = 0;
-        }
+        Arrays.fill(memory, (short) 0);
     }
 
     @Override

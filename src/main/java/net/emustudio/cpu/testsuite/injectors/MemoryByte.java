@@ -28,7 +28,7 @@ import java.util.function.BiConsumer;
  * Given memory address, test runner will inject a 8-bit value there.
  * Higher than 8-bit value will be truncated.
  */
-public class MemoryByte<T extends CpuRunner, OperandType extends Number> implements BiConsumer<T, OperandType> {
+public class MemoryByte<TCpuRunner extends CpuRunner<?>, TOperand extends Number> implements BiConsumer<TCpuRunner, TOperand> {
     private final int address;
 
     /**
@@ -45,7 +45,7 @@ public class MemoryByte<T extends CpuRunner, OperandType extends Number> impleme
     }
 
     @Override
-    public void accept(T cpuRunner, OperandType value) {
+    public void accept(TCpuRunner cpuRunner, TOperand value) {
         cpuRunner.setByte(address, value.byteValue());
     }
 

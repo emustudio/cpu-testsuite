@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "unused"})
 public abstract class FlagsCheck<T extends Number, SpecificFlagsBuilder extends FlagsCheck<T, ?>> {
     protected final List<BiConsumer<RunnerContext<T>, Integer>> evaluators = new ArrayList<>();
 

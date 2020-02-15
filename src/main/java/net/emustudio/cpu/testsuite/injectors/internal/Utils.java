@@ -26,6 +26,7 @@ import java.util.Arrays;
  */
 public class Utils {
 
+    @SafeVarargs
     public static <T> String toHexString(T... array) {
         String[] result = new String[array.length];
 

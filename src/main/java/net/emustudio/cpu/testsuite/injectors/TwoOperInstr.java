@@ -33,11 +33,11 @@ import net.emustudio.cpu.testsuite.injectors.internal.DefaultProgramGenerator;
  * 3. Second Operand
  * 4. Possibly more opcodes (0 or more)
  *
- * @param <T> type of CpuRunner
- * @param <OperandT> type of the operand (Byte or Integer)
+ * @param <TCpuRunner> type of CpuRunner
+ * @param <TOperand> type of the operand (Byte or Integer)
  */
-public class TwoOperInstr<T extends CpuRunner, OperandT extends Number> implements TwoOperInjector<T, OperandT> {
-    private final DefaultProgramGenerator strategy = new DefaultProgramGenerator();
+public class TwoOperInstr<TCpuRunner extends CpuRunner<?>, TOperand extends Number> implements TwoOperInjector<TCpuRunner, TOperand> {
+    private final DefaultProgramGenerator<TOperand> strategy = new DefaultProgramGenerator<>();
 
     /**
      * Create Instruction with two opcodes injector.
@@ -56,13 +56,13 @@ public class TwoOperInstr<T extends CpuRunner, OperandT extends Number> implemen
      * @param opcodes opcode(s). Each opcode must be a byte (don't get confused by int).
      * @return this
      */
-    public TwoOperInstr placeOpcodesAfterOperands(int... opcodes) {
+    public TwoOperInstr<TCpuRunner, TOperand> placeOpcodesAfterOperands(int... opcodes) {
         strategy.addOpcodesAfterOperands(opcodes);
         return this;
     }
 
     @Override
-    public void inject(T cpuRunner, OperandT first, OperandT second) {
+    public void inject(TCpuRunner cpuRunner, TOperand first, TOperand second) {
         strategy.setOperands(first, second);
 
         int tmpFirst = first.intValue() & 0xFFFF;

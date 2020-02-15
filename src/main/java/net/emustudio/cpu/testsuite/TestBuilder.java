@@ -34,235 +34,235 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 @SuppressWarnings({"unused", "unchecked"})
-public abstract class TestBuilder<OperandT extends Number, TestBuilderT extends TestBuilder,
-        RunnerT extends CpuRunner<?>, VerifierT extends CpuVerifier> {
-    protected final RunnerT cpuRunner;
-    protected final VerifierT cpuVerifier;
-    protected final TestRunner<RunnerT, OperandT> runner;
+public abstract class TestBuilder<TOperand extends Number, TTestBuilder extends TestBuilder,
+        TCpuRunner extends CpuRunner<?>, TCpuVerifier extends CpuVerifier> {
+    protected final TCpuRunner cpuRunner;
+    protected final TCpuVerifier cpuVerifier;
+    protected final TestRunner<TCpuRunner, TOperand> runner;
 
-    protected Function<RunnerContext<OperandT>, Integer> lastOperation;
+    protected Function<RunnerContext<TOperand>, Integer> lastOperation;
 
-    protected TestBuilder(RunnerT cpuRunner, VerifierT cpuVerifier) {
+    protected TestBuilder(TCpuRunner cpuRunner, TCpuVerifier cpuVerifier) {
         this.cpuRunner = Objects.requireNonNull(cpuRunner);
         this.cpuVerifier = Objects.requireNonNull(cpuVerifier);
         this.runner = new TestRunner<>(cpuRunner);
     }
 
-    public TestBuilderT clearAllVerifiers() {
+    public TTestBuilder clearAllVerifiers() {
         runner.clearAllVerifiers();
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT verifyAll(Consumer<RunnerContext<OperandT>>... verifiers) {
+    public TTestBuilder verifyAll(Consumer<RunnerContext<TOperand>>... verifiers) {
         runner.verifyAfterTest(verifiers);
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT registerIsRandom(int register, int maxValue) {
+    public TTestBuilder registerIsRandom(int register, int maxValue) {
         Random random = new Random();
         runner.injectFirst((tmpRunner, argument) -> cpuRunner.setRegister(register, random.nextInt(maxValue + 1)));
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT printRegister(int register) {
+    public TTestBuilder printRegister(int register) {
         runner.injectTwoOperands((runner, first, second) ->
                         System.out.println(String.format("REG_%d=%x", register, runner.getRegisters().get(register)))
         );
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT printOperands() {
+    public TTestBuilder printOperands() {
         runner.injectTwoOperands((runner, first, second) ->
                         System.out.println(String.format("first=%x, second=%x", first, second))
         );
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT printInjectingProcess() {
+    public TTestBuilder printInjectingProcess() {
         runner.printInjectingProcess();
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT verifyFlags(FlagsCheck<?, ?> flagsCheck, Function<RunnerContext<OperandT>, Integer> operator) {
+    public TTestBuilder verifyFlags(FlagsCheck<TOperand, ?> flagsCheck, Function<RunnerContext<TOperand>, Integer> operator) {
         lastOperation = operator;
         return verifyFlagsOfLastOp(flagsCheck);
     }
 
-    public TestBuilderT verifyFlagsOfLastOp(FlagsCheck<?, ?> flagsCheck) {
+    public TTestBuilder verifyFlagsOfLastOp(FlagsCheck<TOperand, ?> flagsCheck) {
         if (lastOperation == null) {
             throw new IllegalStateException("Last operation is not set!");
         }
-        Function<RunnerContext<OperandT>, Integer> operation = lastOperation;
+        Function<RunnerContext<TOperand>, Integer> operation = lastOperation;
         runner.verifyAfterTest(new FlagsVerifier<>(cpuVerifier, operation, flagsCheck));
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT verifyByte(int address, Function<RunnerContext<OperandT>, Integer> operator) {
+    public TTestBuilder verifyByte(int address, Function<RunnerContext<TOperand>, Integer> operator) {
         lastOperation = operator;
         return verifyByte(address);
     }
 
-    public TestBuilderT verifyWord(Function<RunnerContext<OperandT>, Integer> addressOperator,
-                                   Function<RunnerContext<OperandT>, Integer> operator) {
+    public TTestBuilder verifyWord(Function<RunnerContext<TOperand>, Integer> addressOperator,
+                                   Function<RunnerContext<TOperand>, Integer> operator) {
         lastOperation = operator;
-        runner.verifyAfterTest(new MemoryWordVerifier<OperandT>(cpuVerifier, operator, addressOperator));
-        return (TestBuilderT)this;
+        runner.verifyAfterTest(new MemoryWordVerifier<TOperand>(cpuVerifier, operator, addressOperator));
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT verifyByte(int address) {
+    public TTestBuilder verifyByte(int address) {
         return verifyByte(context -> address);
     }
 
-    public TestBuilderT verifyByte(Function<RunnerContext<OperandT>, Integer> addressOperator,
-                                   Function<RunnerContext<OperandT>, Integer> operator) {
+    public TTestBuilder verifyByte(Function<RunnerContext<TOperand>, Integer> addressOperator,
+                                   Function<RunnerContext<TOperand>, Integer> operator) {
         lastOperation = operator;
         return verifyByte(addressOperator);
     }
 
-    public TestBuilderT verifyByte(Function<RunnerContext<OperandT>, Integer> addressOperator) {
+    public TTestBuilder verifyByte(Function<RunnerContext<TOperand>, Integer> addressOperator) {
         if (lastOperation == null) {
             throw new IllegalStateException("Last operation is not set!");
         }
         runner.verifyAfterTest(new MemoryByteVerifier<>(cpuVerifier, lastOperation, addressOperator));
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT keepCurrentInjectorsAfterRun() {
+    public TTestBuilder keepCurrentInjectorsAfterRun() {
         runner.keepCurrentInjectorsAfterClear();
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT clearOtherVerifiersAfterRun() {
+    public TTestBuilder clearOtherVerifiersAfterRun() {
         runner.keepCurrentVerifiersAfterClear();
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT firstIsMemoryByteAt(int address) {
+    public TTestBuilder firstIsMemoryByteAt(int address) {
         runner.injectFirst(new MemoryByte<>(address));
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT secondIsMemoryByteAt(int address) {
+    public TTestBuilder secondIsMemoryByteAt(int address) {
         runner.injectSecond(new MemoryByte<>(address));
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT firstIsMemoryWordAt(int address) {
+    public TTestBuilder firstIsMemoryWordAt(int address) {
         runner.injectFirst(new MemoryWord<>(address));
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
     @SuppressWarnings("unused")
-    public TestBuilderT secondIsMemoryWordAt(int address) {
+    public TTestBuilder secondIsMemoryWordAt(int address) {
         runner.injectSecond(new MemoryWord<>(address));
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT firstIsMemoryAddressByte(int value) {
+    public TTestBuilder firstIsMemoryAddressByte(int value) {
         runner.injectFirst(new MemoryAddress<>((byte)value));
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT secondIsMemoryAddressByte(int value) {
+    public TTestBuilder secondIsMemoryAddressByte(int value) {
         runner.injectSecond(new MemoryAddress<>((byte) value));
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT firstIsMemoryAddressWord(int value) {
+    public TTestBuilder firstIsMemoryAddressWord(int value) {
         runner.injectFirst(new MemoryAddress<>(value));
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT secondIsMemoryAddressWord(int value) {
+    public TTestBuilder secondIsMemoryAddressWord(int value) {
         runner.injectSecond(new MemoryAddress<>(value));
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT firstIsAddressAndSecondIsMemoryWord() {
+    public TTestBuilder firstIsAddressAndSecondIsMemoryWord() {
         runner.injectTwoOperands((runner, first, second) -> {
             runner.ensureProgramSize(first.intValue() + 4);
             runner.setByte(first.intValue(), second.intValue() & 0xFF);
             runner.setByte(first.intValue() + 1, (second.intValue() >>> 8) & 0xFF);
         });
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT secondIsAddressAndFirstIsMemoryWord() {
+    public TTestBuilder secondIsAddressAndFirstIsMemoryWord() {
         runner.injectTwoOperands((runner, first, second) -> {
             runner.ensureProgramSize(second.intValue() + 4);
             runner.setByte(second.intValue(), first.intValue() & 0xFF);
             runner.setByte(second.intValue() + 1, (first.intValue() >>> 8) & 0xFF);
         });
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT firstIsAddressAndSecondIsMemoryByte() {
+    public TTestBuilder firstIsAddressAndSecondIsMemoryByte() {
         runner.injectTwoOperands((runner, first, second) -> {
             runner.ensureProgramSize(first.intValue() + 4);
             runner.setByte(first.intValue(), second.intValue() & 0xFF);
         });
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT secondIsAddressAndFirstIsMemoryByte() {
+    public TTestBuilder secondIsAddressAndFirstIsMemoryByte() {
         runner.injectTwoOperands((runner, first, second) -> {
             runner.ensureProgramSize(second.intValue() + 4);
             runner.setByte(second.intValue(), first.intValue() & 0xFF);
         });
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT setFlags(int flags) {
+    public TTestBuilder setFlags(int flags) {
         runner.injectFirst((tmpRunner, argument) -> tmpRunner.setFlags(flags));
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestBuilderT expandMemory(Function<Number, Integer> address) {
+    public TTestBuilder expandMemory(Function<Number, Integer> address) {
         runner.injectFirst((tmpRunner, argument) -> tmpRunner.ensureProgramSize(address.apply(argument)));
-        return (TestBuilderT)this;
+        return (TTestBuilder)this;
     }
 
-    public TestRunner<RunnerT, OperandT> run(int... instruction) {
+    public TestRunner<TCpuRunner, TOperand> run(int... instruction) {
         return prepareTest().injectNoOperand(new NoOperInstr<>(instruction));
     }
 
-    public TestRunner<RunnerT, OperandT> runWithFirstOperand(int... instruction) {
+    public TestRunner<TCpuRunner, TOperand> runWithFirstOperand(int... instruction) {
         return prepareTest().injectFirst(new OneOperInstr<>(instruction));
     }
 
-    public TestRunner<RunnerT, OperandT> runWithSecondOperand(int... instruction) {
+    public TestRunner<TCpuRunner, TOperand> runWithSecondOperand(int... instruction) {
         return prepareTest().injectSecond(new OneOperInstr<>(instruction));
     }
 
-    public TestRunner<RunnerT, OperandT> runWithFirst8bitOperandWithOpcodeAfter(int opcodeAfterOperand, int... instruction) {
+    public TestRunner<TCpuRunner, TOperand> runWithFirst8bitOperandWithOpcodeAfter(int opcodeAfterOperand, int... instruction) {
         return prepareTest().injectFirst((tmpRunner, first) ->
-            new OneOperInstr<RunnerT, Byte>(instruction)
+            new OneOperInstr<TCpuRunner, Byte>(instruction)
                 .placeOpcodesAfterOperand(opcodeAfterOperand)
                 .accept(cpuRunner, first.byteValue())
         );
     }
 
-    public TestRunner<RunnerT, OperandT> runWithFirst8bitOperand(int... instruction) {
+    public TestRunner<TCpuRunner, TOperand> runWithFirst8bitOperand(int... instruction) {
         return prepareTest().injectFirst((tmpRunner, first) ->
-            new OneOperInstr<RunnerT, Byte>(instruction).accept(tmpRunner, first.byteValue())
+            new OneOperInstr<TCpuRunner, Byte>(instruction).accept(tmpRunner, first.byteValue())
         );
     }
 
-    public TestRunner<RunnerT, OperandT> runWithFirst8bitOperandTwoTimes(int... instruction) {
+    public TestRunner<TCpuRunner, TOperand> runWithFirst8bitOperandTwoTimes(int... instruction) {
         return prepareTest().injectFirst((tmpRunner, first) ->
-            new TwoOperInstr<RunnerT, Byte>(instruction)
+            new TwoOperInstr<TCpuRunner, Byte>(instruction)
                 .inject(tmpRunner, first.byteValue(), first.byteValue())
         );
     }
 
-    public TestRunner<RunnerT, OperandT> runWithBothOperandsWithOpcodeAfter(int opcodeAfter, int... instruction) {
+    public TestRunner<TCpuRunner, TOperand> runWithBothOperandsWithOpcodeAfter(int opcodeAfter, int... instruction) {
         return prepareTest().injectTwoOperands(
-            new TwoOperInstr<RunnerT, OperandT>(instruction).placeOpcodesAfterOperands(opcodeAfter)
+            new TwoOperInstr<TCpuRunner, TOperand>(instruction).placeOpcodesAfterOperands(opcodeAfter)
         );
     }
 
-    private TestRunner<RunnerT, OperandT> prepareTest() {
-        TestRunner<RunnerT, OperandT> tmpRunner = runner.clone();
+    private TestRunner<TCpuRunner, TOperand> prepareTest() {
+        TestRunner<TCpuRunner, TOperand> tmpRunner = runner.clone();
 
         runner.clearInjectors();
         runner.clearVerifiers();

@@ -31,11 +31,11 @@ import java.util.function.Function;
  *
  * Used as a test verifier.
  *
- * @param <OperandT> operands type (Byte or Integer)
+ * @param <TOperand> operands type (Byte or Integer)
  */
-public class FlagsVerifier<OperandT extends Number> implements Consumer<RunnerContext<OperandT>> {
-    private final Function<RunnerContext<OperandT>, Integer> operation;
-    private final FlagsCheck flagsCheck;
+public class FlagsVerifier<TOperand extends Number> implements Consumer<RunnerContext<TOperand>> {
+    private final Function<RunnerContext<TOperand>, Integer> operation;
+    private final FlagsCheck<TOperand, ?> flagsCheck;
     private final CpuVerifier verifier;
 
     /**
@@ -45,14 +45,14 @@ public class FlagsVerifier<OperandT extends Number> implements Consumer<RunnerCo
      * @param operation operation which will be used for checking flags
      * @param flagsCheck flags checker
      */
-    public FlagsVerifier(CpuVerifier verifier, Function<RunnerContext<OperandT>, Integer> operation, FlagsCheck flagsCheck) {
+    public FlagsVerifier(CpuVerifier verifier, Function<RunnerContext<TOperand>, Integer> operation, FlagsCheck<TOperand, ?> flagsCheck) {
         this.operation = Objects.requireNonNull(operation);
         this.flagsCheck = Objects.requireNonNull(flagsCheck);
         this.verifier = Objects.requireNonNull(verifier);
     }
 
     @Override
-    public void accept(RunnerContext<OperandT> context) {
+    public void accept(RunnerContext<TOperand> context) {
         flagsCheck.reset();
         flagsCheck.eval(context, operation.apply(context));
 

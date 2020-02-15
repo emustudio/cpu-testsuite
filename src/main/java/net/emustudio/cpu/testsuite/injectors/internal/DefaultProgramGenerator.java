@@ -22,9 +22,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class DefaultProgramGenerator<OperandT extends Number> {
+public class DefaultProgramGenerator<TOperand extends Number> {
     private final List<Short> opcodes = new ArrayList<>();
-    private final List<OperandT> operands  = new ArrayList<>();
+    private final List<TOperand> operands  = new ArrayList<>();
     private final List<Short> opcodesAfterOperand = new ArrayList<>();
 
     public void addOpcodes(int... opcodes) {
@@ -32,7 +32,7 @@ public class DefaultProgramGenerator<OperandT extends Number> {
     }
 
     @SafeVarargs
-    public final void setOperands(OperandT... operands) {
+    public final void setOperands(TOperand... operands) {
         this.operands.addAll(Arrays.asList(operands));
     }
 
@@ -51,7 +51,7 @@ public class DefaultProgramGenerator<OperandT extends Number> {
     public List<Short> generate() {
 
         List<Short> program = new ArrayList<>(opcodes);
-        for (OperandT operand : operands) {
+        for (TOperand operand : operands) {
             if (operand instanceof Byte) {
                 program.add((short)(operand.byteValue() & 0xFF));
             } else if (operand instanceof Integer) {
