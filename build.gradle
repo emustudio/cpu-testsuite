@@ -8,11 +8,13 @@ group 'net.emustudio'
 version '0.40-SNAPSHOT'
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
 dependencies {
-    implementation 'net.sf.emustudio:emuLib:9.0.1'
+    implementation 'net.emustudio:emulib:10.0.0'
+    implementation 'net.jcip:jcip-annotations:1.0'
     implementation 'junit:junit:4.12'
 }
 

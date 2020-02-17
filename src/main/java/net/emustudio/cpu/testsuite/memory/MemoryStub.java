@@ -19,7 +19,8 @@
 
 package net.emustudio.cpu.testsuite.memory;
 
-import emulib.plugins.memory.MemoryContext;
+
+import net.emustudio.emulib.plugins.memory.MemoryContext;
 
 @SuppressWarnings("unused")
 public interface MemoryStub<T extends Number> extends MemoryContext<T> {

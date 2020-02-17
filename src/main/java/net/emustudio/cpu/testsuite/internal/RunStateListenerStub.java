@@ -18,7 +18,7 @@
  */
 package net.emustudio.cpu.testsuite.internal;
 
-import emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugins.cpu.CPU;
 
 /**
  * INTERNAL CLASS. DO NOT USE DIRECTLY.

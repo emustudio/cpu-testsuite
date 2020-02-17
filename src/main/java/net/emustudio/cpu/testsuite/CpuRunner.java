@@ -18,9 +18,9 @@
  */
 package net.emustudio.cpu.testsuite;
 
-import emulib.plugins.cpu.CPU;
 import net.emustudio.cpu.testsuite.internal.RunStateListenerStub;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
+import net.emustudio.emulib.plugins.cpu.CPU;
 
 import java.util.Arrays;
 import java.util.List;

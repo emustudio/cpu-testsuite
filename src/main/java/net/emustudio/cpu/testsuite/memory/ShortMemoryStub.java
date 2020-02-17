@@ -18,7 +18,7 @@
  */
 package net.emustudio.cpu.testsuite.memory;
 
-import emulib.plugins.memory.Memory;
+import net.emustudio.emulib.plugins.memory.Memory;
 
 import java.util.Arrays;
 

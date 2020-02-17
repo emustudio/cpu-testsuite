@@ -18,8 +18,8 @@
  */
 package net.emustudio.cpu.testsuite;
 
-import emulib.runtime.NumberUtils;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
+import net.emustudio.emulib.runtime.helpers.NumberUtils;
 
 import java.util.Objects;
 
