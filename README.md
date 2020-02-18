@@ -23,7 +23,7 @@ For Maven, use:
     <dependency>
       <groupId>net.emustudio</groupId>
       <artifactId>cpu-testsuite</artifactId>
-      <version>0.40-SNAPSHOT</version>
+      <version>1.0.0</version>
       <scope>test</scope>
     </dependency>
 ```
@@ -31,7 +31,7 @@ For Maven, use:
 For Gradle, use:
 
 ```
-    testImplementation 'net.emustudio:cpu-testsuite:0.40-SNAPSHOT'
+    testImplementation 'net.emustudio:cpu-testsuite:1.0.0'
 ```
 
 ## When to use CPU Test Suite
