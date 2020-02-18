@@ -1,4 +1,4 @@
-name: cpu-testsuite
+name: CPU Test Suite Build
 
 on: [push]
 
