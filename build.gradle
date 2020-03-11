@@ -53,6 +53,14 @@ publishing {
                     developerConnection = 'scm:git:git@github.com:emustudio/cpu-testsuite.git'
                     url = 'https://github.com/emustudio/cpu-testsuite'
                 }
+                versionMapping {
+                    usage('java-api') {
+                        fromResolutionOf('runtimeClasspath')
+                    }
+                    usage('java-runtime') {
+                        fromResolutionResult()
+                    }
+                }
             }
         }
     }
