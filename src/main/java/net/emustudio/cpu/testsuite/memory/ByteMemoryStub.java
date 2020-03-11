@@ -65,7 +65,7 @@ public class ByteMemoryStub implements MemoryStub<Byte> {
     }
 
     @Override
-    public Class<?> getDataType() {
+    public Class<Byte> getDataType() {
         return Byte.class;
     }
 

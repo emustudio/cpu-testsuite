@@ -4,15 +4,19 @@ plugins {
     id 'signing'
 }
 
+ext {
+    emulib = '11.0'
+}
+
 group 'net.emustudio'
-version '1.0.0'
+version '1.1.0'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation 'net.emustudio:emulib:10.0.0'
+    implementation "net.emustudio:emulib:${emulib}.+"
     implementation 'net.jcip:jcip-annotations:1.0'
     implementation 'junit:junit:4.12'
 }
@@ -25,7 +29,7 @@ java {
 publishing {
     publications {
         mavenJava(MavenPublication) {
-            artifactId = 'cpu-testsuite'
+            artifactId = "cpu-testsuite_${emulib}"
             from components.java
             pom {
                 name = 'CPU Test Suite'

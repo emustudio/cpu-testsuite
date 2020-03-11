@@ -66,7 +66,7 @@ public class ShortMemoryStub implements MemoryStub<Short> {
     }
 
     @Override
-    public Class<?> getDataType() {
+    public Class<Short> getDataType() {
         return Short.class;
     }
 
