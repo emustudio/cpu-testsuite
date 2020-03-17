@@ -1,9 +1,11 @@
 # CPU Test Suite
 ![cpu-testsuite](https://github.com/emustudio/cpu-testsuite/workflows/cpu-testsuite/badge.svg?branch=master)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.1/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.1)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.2/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.2)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-General unit-testing framework intended for testing emuStudio CPU plug-ins. More specifically, it allows to test correctness of the implementation of CPU instructions. Tests are specified in a declarative way; specific test cases are generated based on the declarative specification.
+General unit-testing framework intended for testing emuStudio CPU plug-ins. More specifically, it allows to test
+correctness of the implementation of CPU instructions. Tests are specified in a declarative way; specific test cases
+are generated based on the declarative specification.
 
 The idea of generating test cases was inspired by ["QuickCheck"](https://github.com/pholser/junit-quickcheck) project.
 
@@ -20,7 +22,7 @@ For Maven, use:
 ```
     <dependency>
       <groupId>net.emustudio</groupId>
-      <artifactId>cpu-testsuite_11.1</artifactId>
+      <artifactId>cpu-testsuite_11.2</artifactId>
       <version>1.1.0</version>
       <scope>test</scope>
     </dependency>
@@ -29,7 +31,7 @@ For Maven, use:
 For Gradle, use:
 
 ```
-    testImplementation 'net.emustudio:cpu-testsuite_11.1:1.1.0'
+    testImplementation 'net.emustudio:cpu-testsuite_11.2:1.1.0'
 ```
 
 NOTE: Artifact name ends with major.minor emuLib version.
