@@ -5,7 +5,7 @@ plugins {
 }
 
 ext {
-    emulib = '11.2'
+    emulib = '11.3'
 }
 
 group 'net.emustudio'
