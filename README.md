@@ -1,6 +1,6 @@
 # CPU Test Suite
 ![cpu-testsuite](https://github.com/emustudio/cpu-testsuite/workflows/cpu-testsuite/badge.svg?branch=master)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.2/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.2)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.3/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.3)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 General unit-testing framework intended for testing emuStudio CPU plug-ins. More specifically, it allows to test
@@ -22,7 +22,7 @@ For Maven, use:
 ```
     <dependency>
       <groupId>net.emustudio</groupId>
-      <artifactId>cpu-testsuite_11.2</artifactId>
+      <artifactId>cpu-testsuite_11.3</artifactId>
       <version>1.1.0</version>
       <scope>test</scope>
     </dependency>
