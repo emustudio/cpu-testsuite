@@ -42,6 +42,6 @@ public class MemoryWordVerifier<T extends Number> implements Consumer<RunnerCont
         int expectedResult = operation.apply(context);
         int address = addressOperation.apply(context);
 
-        verifier.checkMemoryWord(address, expectedResult);
+        verifier.checkMemoryInteger(address, expectedResult);
     }
 }

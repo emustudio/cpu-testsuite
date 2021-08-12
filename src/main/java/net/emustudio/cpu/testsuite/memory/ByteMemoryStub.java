@@ -19,21 +19,28 @@
 package net.emustudio.cpu.testsuite.memory;
 
 import net.emustudio.emulib.plugins.memory.Memory;
+import net.emustudio.emulib.runtime.helpers.NumberUtils;
 
 import java.util.Arrays;
+
+import static net.emustudio.emulib.runtime.helpers.NumberUtils.nativeShortsToBytes;
 
 @SuppressWarnings("unused")
 public class ByteMemoryStub implements MemoryStub<Byte> {
     private final int wordReadingStrategy;
 
-    protected byte[] memory = new byte[1000];
-    private int wordCellsCount = 2;
+    protected Byte[] memory = new Byte[1000];
 
     public ByteMemoryStub(int wordReadingStrategy) {
+        Arrays.fill(memory, (byte) 0);
         this.wordReadingStrategy = wordReadingStrategy;
     }
 
     public void setMemory(byte[] memory) {
+        this.memory = NumberUtils.nativeBytesToBytes(memory);
+    }
+
+    public void setMemory(Byte[] memory) {
         this.memory = memory;
     }
 
@@ -43,13 +50,10 @@ public class ByteMemoryStub implements MemoryStub<Byte> {
     }
 
     @Override
-    public Byte[] readWord(int memoryPosition) {
-        Byte[] word = new Byte[wordCellsCount];
-        for (int i = 0; i < wordCellsCount; i++) {
-            word[i] = memory[memoryPosition + i];
-        }
-
-        return word;
+    public Byte[] read(int memoryPosition, int count) {
+        Byte[] result = new Byte[count];
+        System.arraycopy(memory, memoryPosition, result, 0, count);
+        return result;
     }
 
     @Override
@@ -58,10 +62,8 @@ public class ByteMemoryStub implements MemoryStub<Byte> {
     }
 
     @Override
-    public void writeWord(int memoryPosition, Byte[] cells) {
-        for (int i = 0; i < wordCellsCount; i++) {
-            memory[memoryPosition + i] = cells[i];
-        }
+    public void write(int memoryPosition, Byte[] cells, int count) {
+        System.arraycopy(cells, 0, memory, memoryPosition, count);
     }
 
     @Override
@@ -100,13 +102,8 @@ public class ByteMemoryStub implements MemoryStub<Byte> {
     }
 
     @Override
-    public void setWordCellsCount(int count) {
-        this.wordCellsCount = count;
-    }
-
-    @Override
     public void setMemory(short[] memory) {
-        this.memory = nativeShortsToNativeBytes(memory);
+        this.memory = nativeShortsToBytes(memory);
     }
 
     @Override

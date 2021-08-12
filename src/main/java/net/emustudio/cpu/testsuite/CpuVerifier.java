@@ -30,7 +30,6 @@ import static org.junit.Assert.assertEquals;
  *
  * Used for checking the result (registers, flags, memory) after test execution.
  */
-@SuppressWarnings("unchecked")
 public abstract class CpuVerifier {
     protected final MemoryStub<? extends Number> memoryStub;
 
@@ -46,18 +45,13 @@ public abstract class CpuVerifier {
         );
     }
 
-    public void checkMemoryWord(int address, int value) {
-        Number[] read = memoryStub.readWord(address);
-        Byte[] word = new Byte[] {0,0,0,0};
-        for (int i = 0; i < read.length; i++) {
-            word[i] = read[i].byteValue();
-        }
-
-        int memoryWord = NumberUtils.readInt(word, memoryStub.getWordReadingStrategy());
+    public void checkMemoryInteger(int address, int value) {
+        Byte[] word = NumberUtils.numbersToBytes(memoryStub.read(address, 4));
+        int memoryInt = NumberUtils.readInt(word, memoryStub.getWordReadingStrategy());
 
         assertEquals(
-                String.format("Expected word mem[%04x]=%04x, but was %04x", address, value, memoryWord),
-                value, memoryWord
+                String.format("Expected word mem[%04x]=%04x, but was %04x", address, value, memoryInt),
+                value, memoryInt
         );
     }
 

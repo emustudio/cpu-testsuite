@@ -19,6 +19,7 @@
 package net.emustudio.cpu.testsuite.memory;
 
 import net.emustudio.emulib.plugins.memory.Memory;
+import net.emustudio.emulib.runtime.helpers.NumberUtils;
 
 import java.util.Arrays;
 
@@ -26,16 +27,16 @@ import java.util.Arrays;
 public class ShortMemoryStub implements MemoryStub<Short> {
     private final int wordReadingStrategy;
 
-    protected short[] memory = new short[1000];
-    private int wordCellsCount = 2;
+    protected Short[] memory = new Short[1000];
 
     public ShortMemoryStub(int wordReadingStrategy) {
+        Arrays.fill(memory, (short) 0);
         this.wordReadingStrategy = wordReadingStrategy;
     }
 
     @Override
     public void setMemory(short[] memory) {
-        this.memory = memory;
+        this.memory = NumberUtils.nativeShortsToShorts(memory);
     }
 
     @Override
@@ -44,13 +45,10 @@ public class ShortMemoryStub implements MemoryStub<Short> {
     }
 
     @Override
-    public Short[] readWord(int memoryPosition) {
-        Short[] word = new Short[wordCellsCount];
-        for (int i = 0; i < wordCellsCount; i++) {
-            word[i] = memory[memoryPosition + i];
-        }
-
-        return word;
+    public Short[] read(int memoryPosition, int count) {
+        Short[] result = new Short[count];
+        System.arraycopy(memory, memoryPosition, result, 0, count);
+        return result;
     }
 
     @Override
@@ -59,10 +57,8 @@ public class ShortMemoryStub implements MemoryStub<Short> {
     }
 
     @Override
-    public void writeWord(int memoryPosition, Short[] cells) {
-        for (int i = 0; i < wordCellsCount; i++) {
-            memory[memoryPosition + i] = cells[i];
-        }
+    public void write(int memoryPosition, Short[] cells, int count) {
+        System.arraycopy(cells, 0, memory, memoryPosition, count);
     }
 
     @Override
@@ -98,11 +94,6 @@ public class ShortMemoryStub implements MemoryStub<Short> {
     @Override
     public void setMemoryNotificationsEnabled(boolean enabled) {
 
-    }
-
-    @Override
-    public void setWordCellsCount(int count) {
-        this.wordCellsCount = count;
     }
 
     @Override

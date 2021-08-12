@@ -5,20 +5,21 @@ plugins {
 }
 
 ext {
-    emulib = '11.5'
+    emulib = '11.6'
 }
 
 group 'net.emustudio'
 version '1.2.0-SNAPSHOT'
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
 dependencies {
     implementation "net.emustudio:emulib:${emulib}.+"
     implementation 'net.jcip:jcip-annotations:1.0'
-    implementation 'junit:junit:4.12'
+    implementation 'junit:junit:4.13.2'
 }
 
 java {
