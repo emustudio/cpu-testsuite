@@ -37,21 +37,23 @@ public abstract class CpuVerifier {
         this.memoryStub = Objects.requireNonNull(memoryStub);
     }
 
-    public void checkMemoryByte(int address, int value) {
-        value &= 0xFF;
+    public void checkMemoryByte(int address, int expected) {
+        expected &= 0xFF;
+        int actual = memoryStub.read(address).intValue() & 0xFF;
         assertEquals(
-                String.format("Expected mem[%04x]=%02x, but was %02x", address, value, memoryStub.read(address)),
-                value, memoryStub.read(address).intValue()
+                String.format("Expected mem[%04x]=%02x, but was %02x", address, expected, actual),
+                expected, actual
         );
     }
 
-    public void checkMemoryInteger(int address, int value) {
-        Byte[] word = NumberUtils.numbersToBytes(memoryStub.read(address, 4));
-        int memoryInt = NumberUtils.readInt(word, memoryStub.getWordReadingStrategy());
+    public void checkMemoryTwoBytes(int address, int expected) {
+        expected &= 0xFFFF;
+        Byte[] word = NumberUtils.numbersToBytes(memoryStub.read(address, 2));
+        int actual = NumberUtils.readInt(word, memoryStub.getWordReadingStrategy());
 
         assertEquals(
-                String.format("Expected word mem[%04x]=%04x, but was %04x", address, value, memoryInt),
-                value, memoryInt
+                String.format("Expected word mem[%04x]=%04x, but was %04x", address, expected, actual),
+                expected, actual
         );
     }
 
