@@ -51,9 +51,8 @@ public class ByteMemoryStub implements MemoryStub<Byte> {
 
     @Override
     public Byte[] read(int memoryPosition, int count) {
-        Byte[] result = new Byte[count];
-        System.arraycopy(memory, memoryPosition, result, 0, count);
-        return result;
+        int to = Math.min(memory.length, memoryPosition + count);
+        return Arrays.copyOfRange(memory, memoryPosition, to);
     }
 
     @Override

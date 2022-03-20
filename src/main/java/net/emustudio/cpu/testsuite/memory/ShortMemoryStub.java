@@ -46,9 +46,8 @@ public class ShortMemoryStub implements MemoryStub<Short> {
 
     @Override
     public Short[] read(int memoryPosition, int count) {
-        Short[] result = new Short[count];
-        System.arraycopy(memory, memoryPosition, result, 0, count);
-        return result;
+        int to = Math.min(memory.length, memoryPosition + count);
+        return Arrays.copyOfRange(memory, memoryPosition, to);
     }
 
     @Override
