@@ -24,8 +24,7 @@ import java.util.function.Predicate;
 
 @SuppressWarnings("unused")
 public class Generator {
-    // Contract: Memory size is 16-bit at max
-    private static final int MAX_OPERAND_SIZE = 0xFFFF;
+    private static final int MAX_16BIT_VALUE = 0xFFFF;
     private static int randomTests = 25;
 
     public static void setRandomTestsCount(int randomTests) {
@@ -57,7 +56,7 @@ public class Generator {
     public static void forAll8bitBinaryWhichEqual(BiConsumer<Byte, Byte>... runners) {
         for (int i = 0; i < 256; i++) {
             for (BiConsumer<Byte, Byte> runner : runners) {
-                runner.accept((byte)i, (byte)i);
+                runner.accept((byte) i, (byte) i);
             }
         }
     }
@@ -68,28 +67,46 @@ public class Generator {
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Byte, Byte> runner : runners) {
                 int k = random.nextInt(256);
-                runner.accept((byte)k, (byte)k);
+                runner.accept((byte) k, (byte) k);
+            }
+        }
+    }
+
+    @SafeVarargs
+    public static void forAll16bitBinary(int firstStartFrom, int secondStartFrom, BiConsumer<Integer, Integer>... runners) {
+        if (firstStartFrom > MAX_16BIT_VALUE) {
+            throw new IllegalArgumentException("First start from must be <= " + MAX_16BIT_VALUE);
+        }
+        if (secondStartFrom > MAX_16BIT_VALUE) {
+            throw new IllegalArgumentException("Second start from must be <= " + MAX_16BIT_VALUE);
+        }
+
+        for (int i = firstStartFrom; i < 65536; i++) {
+            for (int j = secondStartFrom; j < 65536; j++) {
+                for (BiConsumer<Integer, Integer> runner : runners) {
+                    runner.accept(i, j);
+                }
             }
         }
     }
 
     @SafeVarargs
     public static void forSome16bitBinary(int firstStartFrom, int secondStartFrom, BiConsumer<Integer, Integer>... runners) {
-        if (firstStartFrom > MAX_OPERAND_SIZE) {
-            throw new IllegalArgumentException("First start from must be <= " + MAX_OPERAND_SIZE);
+        if (firstStartFrom > MAX_16BIT_VALUE) {
+            throw new IllegalArgumentException("First start from must be <= " + MAX_16BIT_VALUE);
         }
-        if (secondStartFrom > MAX_OPERAND_SIZE) {
-            throw new IllegalArgumentException("Second start from must be <= " + MAX_OPERAND_SIZE);
+        if (secondStartFrom > MAX_16BIT_VALUE) {
+            throw new IllegalArgumentException("Second start from must be <= " + MAX_16BIT_VALUE);
         }
 
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
-                int first = random.nextInt(MAX_OPERAND_SIZE);
+                int first = random.nextInt(MAX_16BIT_VALUE);
                 if (first < firstStartFrom) {
                     first = firstStartFrom;
                 }
-                int second = random.nextInt(MAX_OPERAND_SIZE);
+                int second = random.nextInt(MAX_16BIT_VALUE);
                 if (second < secondStartFrom) {
                     second = secondStartFrom;
                 }
@@ -99,8 +116,37 @@ public class Generator {
     }
 
     @SafeVarargs
+    public static void forAll16bitBinary(int firstStartFrom, BiConsumer<Integer, Integer>... runners) {
+        forAll16bitBinary(firstStartFrom, 0, runners);
+    }
+
+    @SafeVarargs
     public static void forSome16bitBinary(int firstStartFrom, BiConsumer<Integer, Integer>... runners) {
         forSome16bitBinary(firstStartFrom, 0, runners);
+    }
+
+    @SafeVarargs
+    public static void forAll16bitBinary(BiConsumer<Integer, Integer>... runners) {
+        forAll16bitBinary(0, 0, runners);
+    }
+
+    @SafeVarargs
+    public static void forSome16bitBinary(BiConsumer<Integer, Integer>... runners) {
+        forSome16bitBinary(0, 0, runners);
+    }
+
+    @SafeVarargs
+    public static void forAll16bitBinaryFirstSatisfying(Predicate<Integer> predicate,
+                                                        BiConsumer<Integer, Integer>... runners) {
+        for (int i = 0; i < 65536; i++) {
+            if (predicate.test(i)) {
+                for (int j = 0; j < 65536; j++) {
+                    for (BiConsumer<Integer, Integer> runner : runners) {
+                        runner.accept(i, j);
+                    }
+                }
+            }
+        }
     }
 
     @SafeVarargs
@@ -109,11 +155,11 @@ public class Generator {
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
-                int first = random.nextInt(MAX_OPERAND_SIZE);
-                while(!predicate.test(first)) {
-                    first = random.nextInt(MAX_OPERAND_SIZE);
+                int first = random.nextInt(MAX_16BIT_VALUE);
+                while (!predicate.test(first)) {
+                    first = random.nextInt(MAX_16BIT_VALUE);
                 }
-                runner.accept(first, random.nextInt(MAX_OPERAND_SIZE));
+                runner.accept(first, random.nextInt(MAX_16BIT_VALUE));
             }
         }
     }
@@ -124,13 +170,13 @@ public class Generator {
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
-                int first = random.nextInt(MAX_OPERAND_SIZE);
-                while(!firstP.test(first)) {
-                    first = random.nextInt(MAX_OPERAND_SIZE);
+                int first = random.nextInt(MAX_16BIT_VALUE);
+                while (!firstP.test(first)) {
+                    first = random.nextInt(MAX_16BIT_VALUE);
                 }
-                int second = random.nextInt(MAX_OPERAND_SIZE);
+                int second = random.nextInt(MAX_16BIT_VALUE);
                 while (!secondP.test(second)) {
-                    second = random.nextInt(MAX_OPERAND_SIZE);
+                    second = random.nextInt(MAX_16BIT_VALUE);
                 }
                 runner.accept(first, second);
             }
@@ -138,11 +184,26 @@ public class Generator {
     }
 
     @SafeVarargs
-    public static void forSome16bitBinary(BiConsumer<Integer, Integer>... runners) {
-        Random random = new Random();
-        for (int i = 0; i < randomTests; i++) {
+    public static void forAll16bitBinaryBothSatisfying(Predicate<Integer> firstP, Predicate<Integer> secondP,
+                                                       BiConsumer<Integer, Integer>... runners) {
+        for (int i = 0; i < 65536; i++) {
+            if (firstP.test(i)) {
+                for (int j = 0; j < 65536; j++) {
+                    if (secondP.test(j)) {
+                        for (BiConsumer<Integer, Integer> runner : runners) {
+                            runner.accept(i, j);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @SafeVarargs
+    public static void forAll16bitBinaryWhichEqual(BiConsumer<Integer, Integer>... runners) {
+        for (int i = 0; i < 65536; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
-                runner.accept(random.nextInt(MAX_OPERAND_SIZE), random.nextInt(MAX_OPERAND_SIZE));
+                runner.accept(i, i);
             }
         }
     }
@@ -152,7 +213,7 @@ public class Generator {
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
-                int k = random.nextInt(MAX_OPERAND_SIZE);
+                int k = random.nextInt(MAX_16BIT_VALUE);
                 runner.accept(k, k);
             }
         }
@@ -162,7 +223,7 @@ public class Generator {
     public static void forAll8bitUnary(BiConsumer<Byte, Byte>... runners) {
         for (int i = 0; i < 256; i++) {
             for (BiConsumer<Byte, Byte> runner : runners) {
-                runner.accept((byte)i, (byte)0);
+                runner.accept((byte) i, (byte) 0);
             }
         }
     }
@@ -173,7 +234,7 @@ public class Generator {
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Byte, Byte> runner : runners) {
                 int k = random.nextInt(256);
-                runner.accept((byte)k, (byte)0);
+                runner.accept((byte) k, (byte) 0);
             }
         }
     }
@@ -188,12 +249,9 @@ public class Generator {
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
-                int first = random.nextInt(0xFFFF);
+                int first = random.nextInt(MAX_16BIT_VALUE + 1);
                 if (first < firstStartFrom) {
                     first += firstStartFrom;
-                }
-                if (first > 0xFFFF) {
-                    first = 0xFFFF;
                 }
                 runner.accept(first, 0);
             }
@@ -202,11 +260,11 @@ public class Generator {
 
     @SafeVarargs
     public static void forAll16bitUnary(int firstStartFrom, BiConsumer<Integer, Integer>... runners) {
-        if (firstStartFrom > MAX_OPERAND_SIZE) {
-            throw new IllegalArgumentException("First start from must be <=" + MAX_OPERAND_SIZE);
+        if (firstStartFrom > MAX_16BIT_VALUE) {
+            throw new IllegalArgumentException("First start from must be <=" + MAX_16BIT_VALUE);
         }
 
-        for (int i = firstStartFrom; i < 0xffff; i++) {
+        for (int i = firstStartFrom; i <= MAX_16BIT_VALUE; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
                 runner.accept(i, 0);
             }
@@ -215,14 +273,14 @@ public class Generator {
 
     @SafeVarargs
     public static <T extends Number> void forGivenOperandsAndSingleRun(T operand, BiConsumer<T, T>... runners) {
-        for (BiConsumer<T,T> runner : runners) {
+        for (BiConsumer<T, T> runner : runners) {
             runner.accept(operand, operand);
         }
     }
 
     @SafeVarargs
     public static <T extends Number> void forGivenOperandsAndSingleRun(T first, T second, BiConsumer<T, T>... runners) {
-        for (BiConsumer<T,T> runner : runners) {
+        for (BiConsumer<T, T> runner : runners) {
             runner.accept(first, second);
         }
     }
