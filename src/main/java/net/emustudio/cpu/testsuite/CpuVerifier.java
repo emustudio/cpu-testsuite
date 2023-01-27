@@ -1,7 +1,7 @@
 /*
  * This file is part of cpu-testsuite.
  *
- * Copyright (C) 2017-2020  Peter Jakubčo
+ * Copyright (C) 2017-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,8 +26,8 @@ import java.util.Objects;
 import static org.junit.Assert.assertEquals;
 
 /**
- *CPU Verifier.
- *
+ * CPU Verifier.
+ * <p>
  * Used for checking the result (registers, flags, memory) after test execution.
  */
 public abstract class CpuVerifier {
