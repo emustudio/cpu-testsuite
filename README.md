@@ -1,6 +1,6 @@
 # CPU Test Suite
 ![cpu-testsuite](https://github.com/emustudio/cpu-testsuite/workflows/cpu-testsuite/badge.svg?branch=master)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.5/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.5)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.7/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.7)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 General unit-testing framework intended for testing emuStudio CPU plug-ins. More specifically, it allows to test
@@ -22,8 +22,8 @@ For Maven, use:
 ```
     <dependency>
       <groupId>net.emustudio</groupId>
-      <artifactId>cpu-testsuite_11.5</artifactId>
-      <version>1.1.0</version>
+      <artifactId>cpu-testsuite_11.7</artifactId>
+      <version>1.2.0</version>
       <scope>test</scope>
     </dependency>
 ```
@@ -31,14 +31,14 @@ For Maven, use:
 For Gradle, use:
 
 ```
-    testImplementation 'net.emustudio:cpu-testsuite_11.5:1.1.0'
+    testImplementation 'net.emustudio:cpu-testsuite_11.7:1.2.0'
 ```
 
-NOTE: Artifact name ends with major.minor emuLib version (currently `_11.5`).
+NOTE: Artifact name ends with major.minor emuLib version (currently `_11.7`).
 
 ## When to use CPU Test Suite
 
-The suite can be used for testing CPU plugins for emuStudio only if the following requirements are fulfiled:
+The suite can be used for testing CPU plugins for emuStudio only if the following requirements are fulfilled:
 
 - operating memory, used by the CPU, is a collection of linearly ordered cells
 - operating memory cell type is `Short` or `Byte`

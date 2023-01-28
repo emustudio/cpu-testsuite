@@ -1,7 +1,7 @@
 /*
  * This file is part of cpu-testsuite.
  *
- * Copyright (C) 2017-2020  Peter Jakubčo
+ * Copyright (C) 2017-2023  Peter Jakubčo
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ import static org.junit.Assert.assertEquals;
 @SuppressWarnings("unused")
 public abstract class CpuRunner<TCpu extends CPU> {
     public int MIN_MEMORY_SIZE = 65536;
-    
+
     private final RunStateListenerStub runStateListener = new RunStateListenerStub();
     protected final TCpu cpu;
     protected final MemoryStub<?> memoryStub;
