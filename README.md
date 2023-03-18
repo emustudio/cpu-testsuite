@@ -1,5 +1,7 @@
 # CPU Test Suite
-![cpu-testsuite](https://github.com/emustudio/cpu-testsuite/workflows/cpu-testsuite/badge.svg?branch=master)
+https://github.com/<OWNER>/<REPOSITORY>/actions/workflows/<WORKFLOW_FILE>/badge.svg
+
+![cpu-testsuite](https://github.com/emustudio/cpu-testsuite/actions/workflows/build.yml/badge.svg?branch=master)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.7/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.7)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
