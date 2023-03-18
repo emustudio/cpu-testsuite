@@ -22,7 +22,7 @@ For Maven, use:
 ```
     <dependency>
       <groupId>net.emustudio</groupId>
-      <artifactId>cpu-testsuite_11.7</artifactId>
+      <artifactId>cpu-testsuite_12.0</artifactId>
       <version>1.2.0</version>
       <scope>test</scope>
     </dependency>
@@ -31,10 +31,10 @@ For Maven, use:
 For Gradle, use:
 
 ```
-    testImplementation 'net.emustudio:cpu-testsuite_11.7:1.2.0'
+    testImplementation 'net.emustudio:cpu-testsuite_12.0:1.2.0'
 ```
 
-NOTE: Artifact name ends with major.minor emuLib version (currently `_11.7`).
+NOTE: Artifact name ends with major.minor emuLib version (currently `_12.0`).
 
 ## When to use CPU Test Suite
 
