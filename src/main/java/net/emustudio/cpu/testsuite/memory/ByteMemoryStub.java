@@ -18,7 +18,7 @@
  */
 package net.emustudio.cpu.testsuite.memory;
 
-import net.emustudio.emulib.plugins.memory.Memory;
+import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 
 import java.util.Arrays;
@@ -66,7 +66,7 @@ public class ByteMemoryStub implements MemoryStub<Byte> {
     }
 
     @Override
-    public Class<Byte> getDataType() {
+    public Class<Byte> getCellTypeClass() {
         return Byte.class;
     }
 
@@ -76,12 +76,12 @@ public class ByteMemoryStub implements MemoryStub<Byte> {
     }
 
     @Override
-    public void addMemoryListener(Memory.MemoryListener listener) {
+    public void addMemoryListener(MemoryListener listener) {
 
     }
 
     @Override
-    public void removeMemoryListener(Memory.MemoryListener listener) {
+    public void removeMemoryListener(MemoryListener listener) {
 
     }
 
@@ -93,6 +93,11 @@ public class ByteMemoryStub implements MemoryStub<Byte> {
     @Override
     public boolean areMemoryNotificationsEnabled() {
         return false;
+    }
+
+    @Override
+    public MemoryContextAnnotations annotations() {
+        return null;
     }
 
     @Override
