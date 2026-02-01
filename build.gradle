@@ -20,7 +20,9 @@ repositories {
 dependencies {
   implementation "net.emustudio:emulib:${emulib}.+"
   implementation 'net.jcip:jcip-annotations:1.0'
-  implementation 'junit:junit:4.13.2'
+  compileOnly 'junit:junit:4.13.2'
+
+  testImplementation 'junit:junit:4.13.2'
 }
 
 java {

@@ -1,21 +1,5 @@
-/*
- * This file is part of cpu-testsuite.
- *
- * Copyright (C) 2017-2023  Peter Jakubčo
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+/* SPDX-FileCopyrightText: 2017-2026 Peter Jakubčo
+   SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.cpu.testsuite;
 
 import net.emustudio.cpu.testsuite.internal.RunStateListenerStub;
@@ -30,8 +14,9 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * CPU Runner.
- *
+ * <p>
  * This class is a wrapper around CPU and memory, and contains the environment for test execution.
+ *
  * @param <TCpu> CPU type
  */
 @SuppressWarnings("unused")
@@ -62,7 +47,7 @@ public abstract class CpuRunner<TCpu extends CPU> {
     public void setProgram(int... program) {
         ensureProgramSize(program.length);
         for (int i = 0; i < program.length; i++) {
-            this.program[i] = (short)program[i];
+            this.program[i] = (short) program[i];
         }
         resetProgram();
     }
@@ -90,7 +75,7 @@ public abstract class CpuRunner<TCpu extends CPU> {
 
     public void setByte(int address, int value) {
         ensureProgramSize(address + 1);
-        program[address] = (short)(value & 0xFF);
+        program[address] = (short) (value & 0xFF);
     }
 
     private void resetProgram() {

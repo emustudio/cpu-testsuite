@@ -1,21 +1,5 @@
-/*
- * This file is part of cpu-testsuite.
- *
- * Copyright (C) 2017-2023  Peter Jakubčo
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
+/* SPDX-FileCopyrightText: 2017-2026 Peter Jakubčo
+   SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.cpu.testsuite;
 
 import net.emustudio.cpu.testsuite.injectors.TwoOperInjector;
@@ -30,17 +14,17 @@ import java.util.function.Consumer;
 
 /**
  * Test runner/executor.
- *
+ * <p>
  * At first, the test is prepared by injecting the operands into all provided injectors. The injectors know
  * what to do. They are using CpuRunner class for manipulating (preparing) CPU state. They are provided by user.
- *
+ * <p>
  * Then, the test is executed (by executing cpuRunner.step()). Flags are saved for further execution.
- *
+ * <p>
  * After, the resulting CPU state should be verified by all provided verifiers. Again, all verifiers know
  * what to do. They are using CpuVerifier class for checking the CPU state. They are provided by user.
  *
  * @param <TCpuRunner> CPU Runner type
- * @param <TOperand> operands type (Byte or Integer)
+ * @param <TOperand>   operands type (Byte or Integer)
  */
 @NotThreadSafe
 public class TestRunner<TCpuRunner extends CpuRunner<?>, TOperand extends Number> implements BiConsumer<TOperand, TOperand> {
@@ -66,10 +50,10 @@ public class TestRunner<TCpuRunner extends CpuRunner<?>, TOperand extends Number
 
     /**
      * Keep currently set injectors after test is executed.
-     *
+     * <p>
      * Each test execution will clear all injectors, because sometimes they are based on specific conditions of single
      * test instance. By using this method, current injectors will be used also in another test executions.
-     *
+     * <p>
      * Injectors added after calling this method will not be preserved, again.
      */
     public void keepCurrentInjectorsAfterClear() {
@@ -78,10 +62,10 @@ public class TestRunner<TCpuRunner extends CpuRunner<?>, TOperand extends Number
 
     /**
      * Keep currently set verifiers after test is executed.
-     *
+     * <p>
      * Each test execution will clear all verifiers, because sometimes they are based on specific conditions of single
      * test instance. By using this method, current verifiers will be used also in another test executions.
-     *
+     * <p>
      * Verifiers added after calling this method will not be preserved, again.
      */
     public void keepCurrentVerifiersAfterClear() {
@@ -98,7 +82,7 @@ public class TestRunner<TCpuRunner extends CpuRunner<?>, TOperand extends Number
 
     /**
      * Inject a CpuRunner to all specified injectors when operands are not needed.
-     *
+     * <p>
      * For example, it might be useful when injecting an instruction with no operands.
      *
      * @param injectors injectors requiring only CpuRunner (no operands)
@@ -117,7 +101,7 @@ public class TestRunner<TCpuRunner extends CpuRunner<?>, TOperand extends Number
 
     /**
      * Inject a CpuRunner and single operand into specified injectors.
-     *
+     * <p>
      * RunnerContext has always two operands. In this case, the first one is used for injection.
      *
      * @param injectors injectors requiring CpuRunner and a single operand
@@ -136,7 +120,7 @@ public class TestRunner<TCpuRunner extends CpuRunner<?>, TOperand extends Number
 
     /**
      * Inject a CpuRunner and single operand into specified injectors.
-     *
+     * <p>
      * RunnerContext has always two operands. In this case, the second one is used for injection.
      *
      * @param injectors injectors requiring CpuRunner and a single operand
@@ -155,7 +139,7 @@ public class TestRunner<TCpuRunner extends CpuRunner<?>, TOperand extends Number
 
     /**
      * Inject a CpuRunner and two operands into specified injectors.
-     *
+     * <p>
      * RunnerContext has always two operands. In this case, both are used for injection, in the order
      * (first, second).
      *
@@ -226,14 +210,14 @@ public class TestRunner<TCpuRunner extends CpuRunner<?>, TOperand extends Number
 
     /**
      * Execute the test.
-     *
+     * <p>
      * At first, it will inject CpuRunner and optionally provided operands into all injectors.
-     *
+     * <p>
      * Then, the CPU will do single step and flags saved.
-     *
+     * <p>
      * The last step is the test verification. All verifiers placed before do their job.
      *
-     * @param first first operand
+     * @param first  first operand
      * @param second second operand
      */
     @Override
