@@ -1,82 +1,91 @@
 # CPU Test Suite
-https://github.com/<OWNER>/<REPOSITORY>/actions/workflows/<WORKFLOW_FILE>/badge.svg
 
 ![cpu-testsuite](https://github.com/emustudio/cpu-testsuite/actions/workflows/build.yml/badge.svg?branch=master)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.7/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.7)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-General unit-testing framework intended for testing emuStudio CPU plug-ins. More specifically, it allows to test
-correctness of the implementation of CPU instructions. Tests are specified in a declarative way; specific test cases
-are generated based on the declarative specification.
+A declarative unit-testing framework for testing emuStudio CPU plug-ins. Write test specifications once, automatically generate comprehensive test cases for instruction correctness verification.
 
-The idea of generating test cases was inspired by ["QuickCheck"](https://github.com/pholser/junit-quickcheck) project.
+Inspired by ["QuickCheck"](https://github.com/pholser/junit-quickcheck) property-based testing.
 
-### Features
+## Features
 
-- Generates test cases for values (8-bit, 16-bit, unary, binary) 
-- Tests are specified using Builder pattern
-- Automatic environment setup (e.g. fill memory with a program, set up initial CPU flags, or set up registers)
+- 🎲 **Automatic test case generation** - generates 8-bit, 16-bit, unary, and binary test cases
+- 🔧 **Declarative test specification** - fluent Builder pattern API
+- ⚙️ **Automatic environment setup** - manages memory, registers, and CPU flags
+- 🚀 **Minimal boilerplate** - reusable test configurations
+- 📊 **Comprehensive coverage** - easily test all instruction variants
 
-## Usage
+## Table of Contents
 
-For Maven, use:
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Core Concepts](#core-concepts)
+- [Implementing Required Classes](#implementing-required-classes)
+- [API Reference](#api-reference)
+  - [TestBuilder Methods](#testbuilder-api-reference)
+  - [Generator Methods](#generator-api-reference)
+  - [Memory Operations](#memory-operations)
+- [Advanced Usage](#advanced-usage-patterns)
+- [Troubleshooting](#troubleshooting)
+- [Examples](#examples)
+- [License](#license)
 
+## Installation
+
+### Maven
+
+```xml
+<dependency>
+  <groupId>net.emustudio</groupId>
+  <artifactId>cpu-testsuite_12.1</artifactId>
+  <version>1.2.0</version>
+  <scope>test</scope>
+</dependency>
 ```
-    <dependency>
-      <groupId>net.emustudio</groupId>
-      <artifactId>cpu-testsuite_12.1</artifactId>
-      <version>1.2.0</version>
-      <scope>test</scope>
-    </dependency>
+
+### Gradle
+
+```gradle
+testImplementation 'net.emustudio:cpu-testsuite_12.1:1.2.0'
 ```
 
-For Gradle, use:
+**Note:** Artifact name ends with major.minor emuLib version (currently `_12.1`).
 
-```
-    testImplementation 'net.emustudio:cpu-testsuite_12.1:1.2.0'
-```
+## Prerequisites
 
-NOTE: Artifact name ends with major.minor emuLib version (currently `_12.1`).
+The CPU Test Suite can be used if your CPU plugin meets these requirements:
 
-## When to use CPU Test Suite
+- ✅ Operating memory is a collection of linearly ordered cells
+- ✅ Memory cell type is `Short` or `Byte`
+- ✅ CPU uses little-endian byte order
+- ✅ CPU has a program counter register (or instruction pointer)
+- ✅ CPU has a stack pointer register
+- ✅ Instruction operands are either `Byte` (8-bit) or `Integer` (16-bit)
 
-The suite can be used for testing CPU plugins for emuStudio only if the following requirements are fulfilled:
+## Quick Start
 
-- operating memory, used by the CPU, is a collection of linearly ordered cells
-- operating memory cell type is `Short` or `Byte`
-- CPU is using little endian
-- CPU has a program counter register (or "instruction pointer") or similar
-- CPU has a stack pointer register
-- Instruction operands are either `Byte` (8-bit) or `Integer` (16-bit)
+### Overview
 
-# Getting started
+Testing a CPU instruction involves:
 
-In order to help you get started, this section shows and describes some code snippets. 
+1. **Setup** - Configure initial CPU state (registers, memory, flags)
+2. **Execute** - Run the instruction
+3. **Verify** - Check the output (registers, flags, memory)
+4. **Repeat** - Automatically for generated test cases
 
-CPU instructions operate either with a CPU state or with some data (registers or memory). When we say
-we are "testing an instruction", we mean by this a verification of the correctness of instruction evaluation.
-The testing process is as follows:
+### Required Implementations
 
-1. Setup the initial CPU state and environment (register values, memory cell values, flags) - usually generate it
-   according to some rules
-2. Run the instruction
-3. Check the output - CPU state, register(s), flags, or memory.
-4. Repeat for another test case
+Each CPU requires custom implementations of:
 
-Each CPU is different. Therefore, the test suite needs specific implementations of several interfaces (or abstract classes):
+- **`CpuRunner`** - Abstract class managing CPU execution environment
+- **`CpuVerifier`** - Abstract class for verifying CPU state
+- **`FlagsCheck`** - Optional abstract class for flag computation
+- **`TestBuilder`** - Concrete class extending `ByteTestBuilder` or `IntegerTestBuilder`
 
-- custom implementation of `CpuRunner` abstract class (the virtual computer)
-- custom implementation of `CpuVerifier` abstract class
+### Simple Example
 
-Those should be instantiated before each test (tests will make them "dirty"). Then, within the JUnit test, the next
-step is to create a "test builder" instance (provided by this framework), which uses the `CpuRunner` and `CpuVerifier`
-objects. 
-
-Optionally, to be able to verify CPU flags, the plugin might want to implement `FlagsCheck` abstract class, which will
-compute flags based on the result and the `RunnerContext` object, which represents the previous environment state
-(first operand, second operand, flags, PC, SP, and possibly other registers).
-
-Let's use 8080 CPU for now, and let's test the `SUB` instruction. The test might look as follows:
+Here's a minimal example testing an 8080 SUB instruction:
 
 ```java
 import static net.emustudio.cpu.testsuite.Generator.*;
@@ -235,3 +244,470 @@ SUB M = A - [HL]
 ```
 
 For more information, see Javadoc of the project, and real usage in available emuStudio CPU plug-ins.
+
+---
+
+## Core Concepts
+
+**Test Execution Flow:** Reset → Inject State → Execute → Verify → Repeat
+
+**Key Components:**
+- **CpuRunner** - Manages CPU execution environment (extend abstract class)
+- **CpuVerifier** - Verifies CPU state after execution (extend abstract class)
+- **TestBuilder** - Fluent API for test specification (extend Byte/IntegerTestBuilder)
+- **Generator** - Produces test cases (built-in static methods)
+- **FlagsCheck** - Optional flag computation (extend abstract class)
+
+**Operand Types:** Use `ByteTestBuilder` for 8-bit or `IntegerTestBuilder` for 16-bit operations.
+
+---
+
+## Implementing Required Classes
+
+### 1. Implementing CpuRunner
+
+```java
+public class MyCpuRunner extends CpuRunner<MyCpu> {
+    public MyCpuRunner(MyCpu cpu, MemoryStub<?> memoryStub) {
+        super(cpu, memoryStub);
+    }
+    
+    public int getPC() { return cpu.getProgramCounter(); }
+    public int getSP() { return cpu.getStackPointer(); }
+    public List<Integer> getRegisters() { /* return all register values */ }
+    public void setRegister(int register, int value) { /* set by index */ }
+    public void setFlags(int mask) { cpu.setFlags(mask); }
+    public int getFlags() { return cpu.getFlags(); }
+}
+```
+
+**Required:** Implement 6 abstract methods. **Inherited:** `setByte()`, `setProgram()`, `reset()`, `step()`
+
+### 2. Implementing CpuVerifier
+
+```java
+public class MyCpuVerifier extends CpuVerifier {
+    public MyCpuVerifier(MyCpu cpu, MemoryStub<?> memoryStub) {
+        super(memoryStub);
+    }
+    
+    public void checkFlags(int expectedFlags) { /* assert flags set */ }
+    public void checkNotFlags(int expectedNotFlags) { /* assert flags not set */ }
+}
+```
+
+**Required:** Implement 2 methods. **Inherited:** `checkMemoryByte()`, `checkMemoryTwoBytes()`
+
+### 3. Implementing FlagsCheck (Optional)
+
+```java
+public class MyFlagsCheck extends FlagsCheck<Integer, MyFlagsCheck> {
+    public MyFlagsCheck zero() {
+        expectFlagOnlyWhen(FLAG_ZERO, (ctx, result) -> (result.intValue() & 0xFFFF) == 0);
+        return this;
+    }
+    public MyFlagsCheck carry() {
+        expectFlagOnlyWhen(FLAG_CARRY, (ctx, result) -> result.intValue() > 0xFFFF);
+        return this;
+    }
+    // ... other flags
+}
+```
+
+**Methods:** `expectFlagOnlyWhen()`, `or()`, `reset()`, `switchFirstAndSecond()`
+
+### 4. Creating TestBuilder
+
+```java
+public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, 
+        MyCpuRunner, MyCpuVerifier> {
+    public ByteTestBuilder(MyCpuRunner runner, MyCpuVerifier verifier) {
+        super(runner, verifier);
+    }
+    
+    // Add CPU-specific methods like firstIsRegister(), verifyRegister()
+}
+```
+
+---
+
+## API Reference
+
+### TestBuilder API Reference
+
+#### Environment Setup
+
+| Method | Purpose | Example |
+|--------|---------|---------|
+| `.setFlags(mask)` | Set CPU flags before execution | `.setFlags(0b10101010)` |
+| `.registerIsRandom(reg, max)` | Set register to random value | `.registerIsRandom(REG_C, 255)` |
+| `.expandMemory(fn)` | Ensure memory size | `.expandMemory(op -> op.intValue() + 100)` |
+```java
+// First/second operand is byte at memory address
+.firstIsMemoryByteAt(0x100)
+.secondIsMemoryByteAt(0x200)
+
+// First/second operand is word (16-bit) at memory address
+.firstIsMemoryWordAt(0x100)
+.secondIsMemoryWordAt(0x200)
+
+// Use first/second operand as memory address containing a value
+.firstIsMemoryAddressByte(0x42)      // Address contains byte 0x42
+.secondIsMemoryAddressWord(0x1234)   // Address contains word 0x1234
+
+// Complex: first is address, write second as word at that address
+.firstIsAddressAndSecondIsMemoryWord()
+.secondIsAddressAndFirstIsMemoryWord()
+
+// Complex: first is address, write second as byte at that address
+.firstIsAddressAndSecondIsMemoryByte()
+.secondIsAddressAndFirstIsMemoryByte()
+
+// Ensure memory is large enough for address calculation
+.expandMemory(operand -> operand.intValue() + 100)
+```
+
+### Verification Methods
+
+#### Register Verification (Custom)
+```java
+// Verify register contains expected value
+.verifyRegister(REG_A, context -> context.first + context.second)
+```
+
+#### Flag Verification
+```java
+// Verify flags with operator
+.verifyFlags(new MyFlagsCheck().sign().zero(), 
+             context -> context.first - context.second)
+
+// Verify flags of last operation (reuses last operator)
+.verifyFlagsOfLastOp(new MyFlagsCheck().carry().parity())
+```
+
+#### Memory Verification
+```java
+// Verify byte at address
+.verifyByte(0x100, context -> context.first & 0xFF)
+
+// Verify byte at address from last operation
+.verifyByte(0x100)  // Uses last operation result
+
+// Verify byte at computed address
+.verifyByte(context -> context.first.intValue(), 
+            context -> context.second)
+
+// Verify word (16-bit) at address
+.verifyWord(context -> 0x100, context -> context.first + context.second)
+```
+
+#### Custom Verification
+```java
+// Add custom verification logic
+.verifyAll(
+    context -> assertEquals(expected, actual),
+    context -> assertTrue(condition)
+)
+```
+
+### State Management
+
+```java
+// Keep injectors after run() - reuse setup for multiple tests
+.keepCurrentInjectorsAfterRun()
+
+// Keep verifiers after run() - reuse verifications
+.clearOtherVerifiersAfterRun()
+
+// Clear all verifiers including kept ones
+.clearAllVerifiers()
+```
+
+### Execution Methods
+
+```java
+// Run with no-operand instruction
+.run(0x90, 0x91)  // Returns TestRunner
+
+// Run with first operand injected into instruction
+.runWithFirstOperand(0x40)
+
+// Run with second operand injected into instruction
+.runWithSecondOperand(0x41)
+
+// Run with first operand as 8-bit value
+.runWithFirst8bitOperand(0x06)
+
+// Run with first operand as 8-bit, twice
+.runWithFirst8bitOperandTwoTimes(0x40)
+
+// Run with both operands, opcodes after operands
+.runWithBothOperandsWithOpcodeAfter(0xFF, 0x40)
+
+// Run with first 8-bit operand, opcode after
+.runWithFirst8bitOperandWithOpcodeAfter(0xFF, 0x06)
+```
+
+### Debugging Methods
+
+```java
+// Enable debug output for injectors
+.printInjectingProcess()
+
+// Print operand values during test
+.printOperands()
+
+// Print register value during test
+.printRegister(REG_A)
+```
+
+---
+
+### Generator API
+
+**Configuration:** `Generator.setRandomTestsCount(10)` - Set random test count (default: 25)
+
+| Operand Type | Method | Test Count |
+|--------------|--------|------------|
+| **8-bit Binary** | `forAll8bitBinary(runners...)` | 65,536 (256×256) |
+| | `forSome8bitBinary(runners...)` | Configurable |
+| | `forAll8bitBinaryWhichEqual(runner)` | 256 |
+| | `forSome8bitBinaryWhichEqual(runner)` | Configurable |
+| **16-bit Binary** | `forAll16bitBinary(from1, from2, runner)` | Large (from start values) |
+| | `forSome16bitBinary(from1, from2, runner)` | Configurable |
+| | `forAll16bitBinaryWhichEqual(runner)` | 65,536 |
+| | `forSome16bitBinaryWhichEqual(runner)` | Configurable |
+| **8-bit Unary** | `forAll8bitUnary(runner)` | 256 |
+| | `forSome8bitUnary(runner)` | Configurable |
+| | `forGivenOperand(operand, runner)` | 1 |
+| **16-bit Unary** | `forAll16bitUnary(from, runner)` | Large (from start) |
+| | `forSome16bitUnary(from, runner)` | Configurable |
+| **Gapped Range** | `forGivenOperandsAndSingleOperand(s,e1,s2,e, r)` | Range with gap |
+
+---
+
+## Memory Operations
+
+**Memory Stubs:** `ByteMemoryStub` and `ShortMemoryStub` with `NumberUtils.Strategy.LITTLE_ENDIAN` or `BIG_ENDIAN`
+
+```java
+// CpuRunner - Write
+cpuRunner.setByte(0x100, 0x42);
+cpuRunner.setProgram(0x90, 0x91, 0x92);
+cpuRunner.ensureProgramSize(1024);
+
+// CpuVerifier - Verify
+cpuVerifier.checkMemoryByte(0x100, 0x42);
+cpuVerifier.checkMemoryTwoBytes(0x100, 0x1234);
+```
+
+---
+
+## Advanced Usage Patterns
+
+### Testing Instructions with Multiple Variants
+
+```java
+@Test
+public void testADD() {
+    ByteTestBuilder test = new ByteTestBuilder(cpuRunner, cpuVerifier)
+        .firstIsRegister(REG_A)
+        .verifyRegister(REG_A, context -> context.first + context.second)
+        .verifyFlagsOfLastOp(new FlagsCheck().sign().zero().carry())
+        .keepCurrentInjectorsAfterRun();
+    
+    // Test all register variants
+    forSome8bitBinary(
+        test.secondIsRegister(REG_B).run(0x80),
+        test.secondIsRegister(REG_C).run(0x81),
+        test.secondIsRegister(REG_D).run(0x82),
+        test.secondIsRegister(REG_E).run(0x83),
+        test.secondIsRegister(REG_H).run(0x84),
+        test.secondIsRegister(REG_L).run(0x85)
+    );
+}
+```
+
+### Testing Memory-Based Instructions
+
+```java
+@Test
+public void testMOV_M() {
+    ByteTestBuilder test = new ByteTestBuilder(cpuRunner, cpuVerifier)
+        .setPair(REG_PAIR_HL, 0x1000)
+        .firstIsRegister(REG_A)
+        .verifyByte(0x1000, context -> context.first);
+    
+    forSome8bitUnary(
+        test.run(0x77)  // MOV M,A - store A at [HL]
+    );
+}
+```
+
+### Testing 16-bit Instructions
+
+```java
+@Test
+public void testADD_HL_BC() {
+    IntegerTestBuilder test = new IntegerTestBuilder(cpuRunner, cpuVerifier)
+        .firstIsPair(REG_PAIR_HL)
+        .secondIsPair(REG_PAIR_BC)
+        .verifyPair(REG_PAIR_HL, context -> context.first + context.second)
+        .verifyFlagsOfLastOp(new FlagsCheck().carry());
+    
+    forSome16bitBinary(0, 0,
+        test.run(0x09)
+    );
+}
+```
+
+### Testing with Specific Values
+
+```java
+@Test
+public void testRotateCarry() {
+    ByteTestBuilder test = new ByteTestBuilder(cpuRunner, cpuVerifier)
+        .firstIsRegister(REG_A)
+        .setFlags(FLAG_CARRY)  // Set carry before operation
+        .verifyRegister(REG_A, context -> {
+            int value = context.first & 0xFF;
+            return ((value << 1) | 1) & 0xFF;  // Rotate left with carry
+        });
+    
+    forSome8bitUnary(
+        test.run(0x17)  // RAL - rotate A left through carry
+    );
+}
+```
+
+### Conditional Flag Verification
+
+```java
+public class MyFlagsCheck extends FlagsCheck<Integer, MyFlagsCheck> {
+    public MyFlagsCheck overflow() {
+        // Overflow only on signed arithmetic
+        expectFlagOnlyWhen(FLAG_OVERFLOW, (context, result) -> {
+            int a = context.first.intValue();
+            int b = context.second.intValue();
+            int r = result.intValue();
+            // Overflow if sign of result differs from expected
+            boolean aPositive = (a & 0x8000) == 0;
+            boolean bPositive = (b & 0x8000) == 0;
+            boolean rPositive = (r & 0x8000) == 0;
+            return (aPositive == bPositive) && (aPositive != rPositive);
+        });
+        return this;
+    }
+}
+```
+
+### Reusing Test Configuration
+
+```java
+@Test
+public void testArithmeticInstructions() {
+    ByteTestBuilder base = new ByteTestBuilder(cpuRunner, cpuVerifier)
+        .firstIsRegister(REG_A)
+        .secondIsRegister(REG_B)
+        .keepCurrentInjectorsAfterRun();
+    
+    // ADD
+    base.verifyRegister(REG_A, context -> context.first + context.second)
+        .verifyFlagsOfLastOp(new FlagsCheck().sign().zero().carry());
+    forSome8bitBinary(base.run(0x80));
+    
+    // SUB - clear previous verifiers, add new ones
+    base.clearAllVerifiers()
+        .verifyRegister(REG_A, context -> context.first - context.second)
+        .verifyFlagsOfLastOp(new FlagsCheck().sign().zero().carry());
+    forSome8bitBinary(base.run(0x90));
+}
+```
+
+### Complex Memory Patterns
+
+```java
+@Test
+public void testBlockMove() {
+    ByteTestBuilder test = new ByteTestBuilder(cpuRunner, cpuVerifier)
+        .firstIsMemoryByteAt(0x1000)        // Source
+        .secondIsMemoryAddressByte(0x42)    // Destination address
+        .verifyAll(context -> {
+            int destAddr = context.second;
+            int value = context.first;
+            cpuVerifier.checkMemoryByte(destAddr, value);
+        });
+    
+    forSome8bitBinary(
+        test.run(0xED, 0xB0)  // LDIR or similar
+    );
+}
+```
+
+---
+
+## Troubleshooting
+
+**"Last operation is not set!"**
+
+Provide operation in same call or set it in previous call:
+```java
+.verifyByte(0x100, context -> context.first + context.second)
+// OR
+.verifyRegister(REG_A, context -> context.first + context.second)
+.verifyFlagsOfLastOp(new FlagsCheck().zero())  // Reuses lastOperation
+```
+
+**Test Fails: "PC=X expected:<breakpoint> but was:<null>"**
+
+Ensure CPU calls `CPUListener` after `step()`:
+```java
+public void step() {
+    executeInstruction();
+    notifyStateChanged(RunState.STATE_STOPPED_BREAK);
+}
+```
+
+**Wrong Flag Values**
+
+Verify `FlagsCheck` logic:
+```java
+public MyFlagsCheck zero() {
+    expectFlagOnlyWhen(FLAG_ZERO, (ctx, result) -> 
+        (result.intValue() & 0xFF) == 0);  // Mask to proper width
+    return this;
+}
+```
+
+**Problem:** Flag verification fails unexpectedly.
+
+**Solution:** Double-check your FlagsCheck logic. Use `.printInjectingProcess()` and debug output to verify:
+```java
+test.printInjectingProcess()
+    .verifyAll(context -> {
+        System.out.println("First: " + context.first);
+        System.out.println("Second: " + context.second);
+        System.out.println("Flags: " + Integer.toBinaryString(cpuRunner.getFlags()));
+    });
+```
+
+**Tests Too Slow?**
+
+Use `forSome*` instead of `forAll*`:
+```java
+Generator.setRandomTestsCount(50);
+forSome8bitBinary(test.run(0x90));
+```
+
+---
+
+## Additional Resources
+
+- **Javadoc**: Full API documentation
+- **Source Code**: [https://github.com/emustudio/emuStudio](https://github.com/emustudio/emuStudio)
+- **Bug Reports**: [GitHub Issues](https://github.com/emustudio/emuStudio/issues)
+- **Real Examples**: See Intel 8080 and Zilog Z80 CPU plugin tests
+
+## License
+
+Licensed under GPL v3.0. See LICENSE file for details.

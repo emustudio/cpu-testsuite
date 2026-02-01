@@ -22,10 +22,9 @@ public class MemoryWord<TCpuRunner extends CpuRunner<?>, TOperand extends Number
      * @param address address at which the test runner will inject a value
      */
     public MemoryWord(int address) {
-        if (address <= 0) {
-            throw new IllegalArgumentException("Address can be only > 0!");
+        if (address < 0) {
+            throw new IllegalArgumentException("Address must be non-negative (was " + address + ")");
         }
-
         this.address = address;
     }
 

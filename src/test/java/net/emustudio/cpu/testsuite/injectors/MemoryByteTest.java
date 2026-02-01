@@ -30,13 +30,15 @@ public class MemoryByteTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testConstructorWithZeroAddress() {
-        new MemoryByte<SimpleCpuRunner, Integer>(0);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
     public void testConstructorWithNegativeAddress() {
         new MemoryByte<SimpleCpuRunner, Integer>(-1);
+    }
+
+    @Test
+    public void testConstructorWithZeroAddress() {
+        // Address 0 is now valid
+        MemoryByte<SimpleCpuRunner, Integer> injector = new MemoryByte<>(0);
+        assertNotNull(injector);
     }
 
     @Test

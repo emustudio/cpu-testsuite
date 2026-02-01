@@ -21,10 +21,9 @@ public class MemoryByte<TCpuRunner extends CpuRunner<?>, TOperand extends Number
      * @param address memory address where the byte will be injected
      */
     public MemoryByte(int address) {
-        if (address <= 0) {
-            throw new IllegalArgumentException("Address can be only > 0! (was " + address + ")");
+        if (address < 0) {
+            throw new IllegalArgumentException("Address must be non-negative (was " + address + ")");
         }
-
         this.address = address;
     }
 

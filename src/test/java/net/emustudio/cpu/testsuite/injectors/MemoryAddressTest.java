@@ -116,7 +116,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testAcceptWithZeroWordValue() {
-        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>(0);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>(Integer.valueOf(0));
         injector.accept(cpuRunner, 0x100);
 
         assertEquals((byte) 0, memory.read(0x100).byteValue());
@@ -198,7 +198,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testNegativeWordValue() {
-        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>(-1);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>(Integer.valueOf(-1));
         injector.accept(cpuRunner, 0x100);
 
         assertEquals((byte) 0xFF, memory.read(0x100).byteValue());

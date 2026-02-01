@@ -20,7 +20,11 @@ import static org.junit.Assert.assertEquals;
  */
 @SuppressWarnings("unused")
 public abstract class CpuRunner<TCpu extends CPU> {
-    public int MIN_MEMORY_SIZE = 65536;
+    /**
+     * Minimum memory size in bytes. Set to 64KB to accommodate most CPU architectures
+     * that use 16-bit addressing.
+     */
+    public static final int MIN_MEMORY_SIZE = 65536;
 
     private final RunStateListenerStub runStateListener = new RunStateListenerStub();
     protected final TCpu cpu;
@@ -79,6 +83,7 @@ public abstract class CpuRunner<TCpu extends CPU> {
         resetProgram();
     }
 
+    @SuppressWarnings("unchecked") // Safe: type checked via getCellTypeClass()
     public void setByte(int address, int value) {
         ensureProgramSize(address + 1);
         program[address] = (short) (value & 0xFF);

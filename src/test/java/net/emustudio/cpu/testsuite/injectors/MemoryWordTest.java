@@ -30,13 +30,15 @@ public class MemoryWordTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void testConstructorWithZeroAddress() {
-        new MemoryWord<SimpleCpuRunner, Integer>(0);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
     public void testConstructorWithNegativeAddress() {
         new MemoryWord<SimpleCpuRunner, Integer>(-1);
+    }
+
+    @Test
+    public void testConstructorWithZeroAddress() {
+        // Address 0 is now valid
+        MemoryWord<SimpleCpuRunner, Integer> injector = new MemoryWord<>(0);
+        assertNotNull(injector);
     }
 
     @Test

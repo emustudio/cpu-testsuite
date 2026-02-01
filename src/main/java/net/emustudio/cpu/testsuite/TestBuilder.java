@@ -18,7 +18,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 @SuppressWarnings({"unused", "unchecked"})
-public abstract class TestBuilder<TOperand extends Number, TTestBuilder extends TestBuilder,
+public abstract class TestBuilder<TOperand extends Number,
+        TTestBuilder extends TestBuilder<TOperand, TTestBuilder, TCpuRunner, TCpuVerifier>,
         TCpuRunner extends CpuRunner<?>, TCpuVerifier extends CpuVerifier> {
     protected final TCpuRunner cpuRunner;
     protected final TCpuVerifier cpuVerifier;
@@ -50,14 +51,14 @@ public abstract class TestBuilder<TOperand extends Number, TTestBuilder extends 
 
     public TTestBuilder printRegister(int register) {
         runner.injectTwoOperands((runner, first, second) ->
-                System.out.println(String.format("REG_%d=%x", register, runner.getRegisters().get(register)))
+                System.out.printf("REG_%d=%x%n", register, runner.getRegisters().get(register))
         );
         return (TTestBuilder) this;
     }
 
     public TTestBuilder printOperands() {
         runner.injectTwoOperands((runner, first, second) ->
-                System.out.println(String.format("first=%x, second=%x", first, second))
+                System.out.printf("first=%x, second=%x%n", first, second)
         );
         return (TTestBuilder) this;
     }
@@ -163,37 +164,38 @@ public abstract class TestBuilder<TOperand extends Number, TTestBuilder extends 
     }
 
     public TTestBuilder firstIsAddressAndSecondIsMemoryWord() {
-        runner.injectTwoOperands((runner, first, second) -> {
-            runner.ensureProgramSize(first.intValue() + 4);
-            runner.setByte(first.intValue(), second.intValue() & 0xFF);
-            runner.setByte(first.intValue() + 1, (second.intValue() >>> 8) & 0xFF);
-        });
+        runner.injectTwoOperands((runner, first, second) ->
+            writeWordToAddress(runner, first.intValue(), second.intValue()));
         return (TTestBuilder) this;
     }
 
     public TTestBuilder secondIsAddressAndFirstIsMemoryWord() {
-        runner.injectTwoOperands((runner, first, second) -> {
-            runner.ensureProgramSize(second.intValue() + 4);
-            runner.setByte(second.intValue(), first.intValue() & 0xFF);
-            runner.setByte(second.intValue() + 1, (first.intValue() >>> 8) & 0xFF);
-        });
+        runner.injectTwoOperands((runner, first, second) ->
+            writeWordToAddress(runner, second.intValue(), first.intValue()));
         return (TTestBuilder) this;
     }
 
     public TTestBuilder firstIsAddressAndSecondIsMemoryByte() {
-        runner.injectTwoOperands((runner, first, second) -> {
-            runner.ensureProgramSize(first.intValue() + 4);
-            runner.setByte(first.intValue(), second.intValue() & 0xFF);
-        });
+        runner.injectTwoOperands((runner, first, second) ->
+            writeByteToAddress(runner, first.intValue(), second.intValue()));
         return (TTestBuilder) this;
     }
 
     public TTestBuilder secondIsAddressAndFirstIsMemoryByte() {
-        runner.injectTwoOperands((runner, first, second) -> {
-            runner.ensureProgramSize(second.intValue() + 4);
-            runner.setByte(second.intValue(), first.intValue() & 0xFF);
-        });
+        runner.injectTwoOperands((runner, first, second) ->
+            writeByteToAddress(runner, second.intValue(), first.intValue()));
         return (TTestBuilder) this;
+    }
+
+    private void writeWordToAddress(TCpuRunner runner, int address, int value) {
+        runner.ensureProgramSize(address + 4);
+        runner.setByte(address, value & 0xFF);
+        runner.setByte(address + 1, (value >>> 8) & 0xFF);
+    }
+
+    private void writeByteToAddress(TCpuRunner runner, int address, int value) {
+        runner.ensureProgramSize(address + 4);
+        runner.setByte(address, value & 0xFF);
     }
 
     public TTestBuilder setFlags(int flags) {

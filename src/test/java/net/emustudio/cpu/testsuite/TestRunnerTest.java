@@ -251,7 +251,6 @@ public class TestRunnerTest {
     @Test
     public void testAcceptCallsVerifiersAfterStep() {
         AtomicBoolean verifierCalled = new AtomicBoolean(false);
-        AtomicBoolean stepCalledBeforeVerifier = new AtomicBoolean(false);
 
         doAnswer(invocation -> {
             verify(cpuRunner, times(1)).reset();
