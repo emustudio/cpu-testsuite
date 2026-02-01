@@ -6,7 +6,6 @@ import net.emustudio.cpu.testsuite.internal.RunStateListenerStub;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
 import net.emustudio.emulib.plugins.cpu.CPU;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,7 +38,14 @@ public abstract class CpuRunner<TCpu extends CPU> {
     public void ensureProgramSize(int length) {
         length = Math.max(length, MIN_MEMORY_SIZE);
         if (program.length < length) {
-            this.program = Arrays.copyOf(this.program, length);
+            // Preserve existing memory content
+            short[] newProgram = new short[length];
+            int memSize = Math.min(length, memoryStub.getSize());
+            for (int i = 0; i < memSize; i++) {
+                Number cell = memoryStub.read(i);
+                newProgram[i] = cell.shortValue();
+            }
+            this.program = newProgram;
             resetProgram();
         }
     }
@@ -76,6 +82,11 @@ public abstract class CpuRunner<TCpu extends CPU> {
     public void setByte(int address, int value) {
         ensureProgramSize(address + 1);
         program[address] = (short) (value & 0xFF);
+        if (memoryStub.getCellTypeClass() == Byte.class) {
+            ((MemoryStub<Byte>) memoryStub).write(address, (byte) (value & 0xFF));
+        } else if (memoryStub.getCellTypeClass() == Short.class) {
+            ((MemoryStub<Short>) memoryStub).write(address, (short) (value & 0xFF));
+        }
     }
 
     private void resetProgram() {
