@@ -2,83 +2,46 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.cpu.testsuite.injectors;
 
-import net.emustudio.cpu.testsuite.CpuRunner;
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
+import net.emustudio.cpu.testsuite.support.SimpleCpuRunner;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collections;
-import java.util.List;
-
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 
 public class MemoryWordTest {
-    private TestCpuRunner cpuRunner;
+    private SimpleCpuRunner cpuRunner;
     private ByteMemoryStub memory;
-
-    private static class TestCpuRunner extends CpuRunner<CPU> {
-        public TestCpuRunner(CPU cpu, ByteMemoryStub memoryStub) {
-            super(cpu, memoryStub);
-        }
-
-        @Override
-        public int getPC() {
-            return 0;
-        }
-
-        @Override
-        public int getSP() {
-            return 0;
-        }
-
-        @Override
-        public List<Integer> getRegisters() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public void setRegister(int register, int value) {
-        }
-
-        @Override
-        public void setFlags(int mask) {
-        }
-
-        @Override
-        public int getFlags() {
-            return 0;
-        }
-    }
 
     @Before
     public void setUp() {
         memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         CPU mockCpu = mock(CPU.class);
-        cpuRunner = new TestCpuRunner(mockCpu, memory);
+        cpuRunner = new SimpleCpuRunner(mockCpu, memory);
     }
 
     @Test
     public void testConstructorWithValidAddress() {
-        MemoryWord<TestCpuRunner, Integer> injector = new MemoryWord<>(0x100);
+        MemoryWord<SimpleCpuRunner, Integer> injector = new MemoryWord<>(0x100);
         assertNotNull(injector);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testConstructorWithZeroAddress() {
-        new MemoryWord<TestCpuRunner, Integer>(0);
+        new MemoryWord<SimpleCpuRunner, Integer>(0);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testConstructorWithNegativeAddress() {
-        new MemoryWord<TestCpuRunner, Integer>(-1);
+        new MemoryWord<SimpleCpuRunner, Integer>(-1);
     }
 
     @Test
     public void testAcceptWithIntegerValue() {
-        MemoryWord<TestCpuRunner, Integer> injector = new MemoryWord<>(0x100);
+        MemoryWord<SimpleCpuRunner, Integer> injector = new MemoryWord<>(0x100);
         injector.accept(cpuRunner, 0x1234);
 
         // Little-endian: low byte first
@@ -88,7 +51,7 @@ public class MemoryWordTest {
 
     @Test
     public void testAcceptWithZeroValue() {
-        MemoryWord<TestCpuRunner, Integer> injector = new MemoryWord<>(0x100);
+        MemoryWord<SimpleCpuRunner, Integer> injector = new MemoryWord<>(0x100);
         injector.accept(cpuRunner, 0);
 
         assertEquals((byte) 0x00, memory.read(0x100).byteValue());
@@ -97,7 +60,7 @@ public class MemoryWordTest {
 
     @Test
     public void testAcceptWithMaxValue() {
-        MemoryWord<TestCpuRunner, Integer> injector = new MemoryWord<>(0x100);
+        MemoryWord<SimpleCpuRunner, Integer> injector = new MemoryWord<>(0x100);
         injector.accept(cpuRunner, 0xFFFF);
 
         assertEquals((byte) 0xFF, memory.read(0x100).byteValue());
@@ -106,7 +69,7 @@ public class MemoryWordTest {
 
     @Test
     public void testAcceptTruncatesHigherBits() {
-        MemoryWord<TestCpuRunner, Integer> injector = new MemoryWord<>(0x100);
+        MemoryWord<SimpleCpuRunner, Integer> injector = new MemoryWord<>(0x100);
         injector.accept(cpuRunner, 0x12345678);
 
         // Only low 16 bits should be stored
@@ -116,8 +79,8 @@ public class MemoryWordTest {
 
     @Test
     public void testAcceptAtDifferentAddresses() {
-        MemoryWord<TestCpuRunner, Integer> injector1 = new MemoryWord<>(0x100);
-        MemoryWord<TestCpuRunner, Integer> injector2 = new MemoryWord<>(0x200);
+        MemoryWord<SimpleCpuRunner, Integer> injector1 = new MemoryWord<>(0x100);
+        MemoryWord<SimpleCpuRunner, Integer> injector2 = new MemoryWord<>(0x200);
 
         injector1.accept(cpuRunner, 0xAABB);
         injector2.accept(cpuRunner, 0xCCDD);
@@ -130,7 +93,7 @@ public class MemoryWordTest {
 
     @Test
     public void testAcceptWithShortValue() {
-        MemoryWord<TestCpuRunner, Short> injector = new MemoryWord<>(0x100);
+        MemoryWord<SimpleCpuRunner, Short> injector = new MemoryWord<>(0x100);
         injector.accept(cpuRunner, (short) 0x8765);
 
         assertEquals((byte) 0x65, memory.read(0x100).byteValue());
@@ -139,7 +102,7 @@ public class MemoryWordTest {
 
     @Test
     public void testToString() {
-        MemoryWord<TestCpuRunner, Integer> injector = new MemoryWord<>(0x1234);
+        MemoryWord<SimpleCpuRunner, Integer> injector = new MemoryWord<>(0x1234);
         String result = injector.toString();
 
         assertNotNull(result);
@@ -149,7 +112,7 @@ public class MemoryWordTest {
 
     @Test
     public void testAcceptOverwritesExistingValue() {
-        MemoryWord<TestCpuRunner, Integer> injector = new MemoryWord<>(0x100);
+        MemoryWord<SimpleCpuRunner, Integer> injector = new MemoryWord<>(0x100);
 
         injector.accept(cpuRunner, 0x1111);
         injector.accept(cpuRunner, 0x2222);
@@ -160,7 +123,7 @@ public class MemoryWordTest {
 
     @Test
     public void testAcceptWritesTwoConsecutiveBytes() {
-        MemoryWord<TestCpuRunner, Integer> injector = new MemoryWord<>(0x100);
+        MemoryWord<SimpleCpuRunner, Integer> injector = new MemoryWord<>(0x100);
         injector.accept(cpuRunner, 0xABCD);
 
         // Verify both bytes are written
@@ -170,7 +133,7 @@ public class MemoryWordTest {
 
     @Test
     public void testAcceptWithSmallValue() {
-        MemoryWord<TestCpuRunner, Integer> injector = new MemoryWord<>(0x100);
+        MemoryWord<SimpleCpuRunner, Integer> injector = new MemoryWord<>(0x100);
         injector.accept(cpuRunner, 0x0012);
 
         assertEquals((byte) 0x12, memory.read(0x100).byteValue());
@@ -182,7 +145,7 @@ public class MemoryWordTest {
         memory.write(0xFF, (byte) 0x99);
         memory.write(0x102, (byte) 0x88);
 
-        MemoryWord<TestCpuRunner, Integer> injector = new MemoryWord<>(0x100);
+        MemoryWord<SimpleCpuRunner, Integer> injector = new MemoryWord<>(0x100);
         injector.accept(cpuRunner, 0x1234);
 
         // Surrounding memory should be preserved
@@ -192,7 +155,7 @@ public class MemoryWordTest {
 
     @Test
     public void testAcceptWithNegativeValue() {
-        MemoryWord<TestCpuRunner, Integer> injector = new MemoryWord<>(0x100);
+        MemoryWord<SimpleCpuRunner, Integer> injector = new MemoryWord<>(0x100);
         injector.accept(cpuRunner, -1);
 
         // -1 as 16-bit = 0xFFFF
@@ -202,8 +165,8 @@ public class MemoryWordTest {
 
     @Test
     public void testMultipleWordsAtAdjacentAddresses() {
-        MemoryWord<TestCpuRunner, Integer> injector1 = new MemoryWord<>(0x100);
-        MemoryWord<TestCpuRunner, Integer> injector2 = new MemoryWord<>(0x102);
+        MemoryWord<SimpleCpuRunner, Integer> injector1 = new MemoryWord<>(0x100);
+        MemoryWord<SimpleCpuRunner, Integer> injector2 = new MemoryWord<>(0x102);
 
         injector1.accept(cpuRunner, 0x1122);
         injector2.accept(cpuRunner, 0x3344);
@@ -216,7 +179,7 @@ public class MemoryWordTest {
 
     @Test
     public void testAcceptWithLargeAddress() {
-        MemoryWord<TestCpuRunner, Integer> injector = new MemoryWord<>(0xFFFE);
+        MemoryWord<SimpleCpuRunner, Integer> injector = new MemoryWord<>(0xFFFE);
         injector.accept(cpuRunner, 0x9988);
 
         assertEquals((byte) 0x88, memory.read(0xFFFE).byteValue());

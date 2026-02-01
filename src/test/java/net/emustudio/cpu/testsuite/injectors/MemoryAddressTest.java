@@ -2,79 +2,42 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.cpu.testsuite.injectors;
 
-import net.emustudio.cpu.testsuite.CpuRunner;
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
+import net.emustudio.cpu.testsuite.support.SimpleCpuRunner;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collections;
-import java.util.List;
-
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 
 public class MemoryAddressTest {
-    private TestCpuRunner cpuRunner;
+    private SimpleCpuRunner cpuRunner;
     private ByteMemoryStub memory;
-
-    private static class TestCpuRunner extends CpuRunner<CPU> {
-        public TestCpuRunner(CPU cpu, ByteMemoryStub memoryStub) {
-            super(cpu, memoryStub);
-        }
-
-        @Override
-        public int getPC() {
-            return 0;
-        }
-
-        @Override
-        public int getSP() {
-            return 0;
-        }
-
-        @Override
-        public List<Integer> getRegisters() {
-            return Collections.emptyList();
-        }
-
-        @Override
-        public void setRegister(int register, int value) {
-        }
-
-        @Override
-        public void setFlags(int mask) {
-        }
-
-        @Override
-        public int getFlags() {
-            return 0;
-        }
-    }
 
     @Before
     public void setUp() {
         memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         CPU mockCpu = mock(CPU.class);
-        cpuRunner = new TestCpuRunner(mockCpu, memory);
+        cpuRunner = new SimpleCpuRunner(mockCpu, memory);
     }
 
     @Test
     public void testByteConstructor() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0x42);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0x42);
         assertNotNull(injector);
     }
 
     @Test
     public void testIntegerConstructor() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>(0x1234);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>(0x1234);
         assertNotNull(injector);
     }
 
     @Test
     public void testAcceptByteValue() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0x55);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0x55);
         injector.accept(cpuRunner, 0x100);
 
         assertEquals((byte) 0x55, memory.read(0x100).byteValue());
@@ -82,7 +45,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testAcceptWordValue() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>(0x1234);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>(0x1234);
         injector.accept(cpuRunner, 0x100);
 
         // Word value: little-endian
@@ -92,7 +55,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testByteValueOnlyWritesOneByte() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0x99);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0x99);
 
         // Set a marker at address + 1
         memory.write(0x101, (byte) 0xAA);
@@ -105,7 +68,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testWordValueWritesTwoBytes() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>(0xABCD);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>(0xABCD);
         injector.accept(cpuRunner, 0x200);
 
         assertEquals((byte) 0xCD, memory.read(0x200).byteValue());
@@ -114,7 +77,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testByteValueTruncation() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0xFF);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0xFF);
         injector.accept(cpuRunner, 0x100);
 
         assertEquals((byte) 0xFF, memory.read(0x100).byteValue());
@@ -122,7 +85,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testWordValueTruncation() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>(0x12345);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>(0x12345);
         injector.accept(cpuRunner, 0x100);
 
         // Should truncate to 16 bits: 0x2345
@@ -132,7 +95,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testAcceptAtDifferentAddresses() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0x77);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0x77);
 
         injector.accept(cpuRunner, 0x100);
         injector.accept(cpuRunner, 0x200);
@@ -145,7 +108,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testAcceptWithZeroByteValue() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0);
         injector.accept(cpuRunner, 0x100);
 
         assertEquals((byte) 0, memory.read(0x100).byteValue());
@@ -153,7 +116,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testAcceptWithZeroWordValue() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>(0);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>(0);
         injector.accept(cpuRunner, 0x100);
 
         assertEquals((byte) 0, memory.read(0x100).byteValue());
@@ -162,7 +125,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testAcceptWithMaxByteValue() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0xFF);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0xFF);
         injector.accept(cpuRunner, 0x100);
 
         assertEquals((byte) 0xFF, memory.read(0x100).byteValue());
@@ -170,7 +133,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testAcceptWithMaxWordValue() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>(0xFFFF);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>(0xFFFF);
         injector.accept(cpuRunner, 0x100);
 
         assertEquals((byte) 0xFF, memory.read(0x100).byteValue());
@@ -179,7 +142,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testToStringForByte() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0x42);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0x42);
         String result = injector.toString();
 
         assertNotNull(result);
@@ -189,7 +152,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testToStringForWord() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>(0x1234);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>(0x1234);
         String result = injector.toString();
 
         assertNotNull(result);
@@ -199,7 +162,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testAcceptWithByteOperandType() {
-        MemoryAddress<TestCpuRunner, Byte> injector = new MemoryAddress<>((byte) 0x88);
+        MemoryAddress<SimpleCpuRunner, Byte> injector = new MemoryAddress<>((byte) 0x88);
         injector.accept(cpuRunner, (byte) 0x50);
 
         assertEquals((byte) 0x88, memory.read(0x50).byteValue());
@@ -207,7 +170,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testAcceptWithShortOperandType() {
-        MemoryAddress<TestCpuRunner, Short> injector = new MemoryAddress<>(0xABCD);
+        MemoryAddress<SimpleCpuRunner, Short> injector = new MemoryAddress<>(0xABCD);
         injector.accept(cpuRunner, (short) 0x100);
 
         assertEquals((byte) 0xCD, memory.read(0x100).byteValue());
@@ -216,8 +179,8 @@ public class MemoryAddressTest {
 
     @Test
     public void testAcceptOverwritesMemory() {
-        MemoryAddress<TestCpuRunner, Integer> injector1 = new MemoryAddress<>((byte) 0x11);
-        MemoryAddress<TestCpuRunner, Integer> injector2 = new MemoryAddress<>((byte) 0x22);
+        MemoryAddress<SimpleCpuRunner, Integer> injector1 = new MemoryAddress<>((byte) 0x11);
+        MemoryAddress<SimpleCpuRunner, Integer> injector2 = new MemoryAddress<>((byte) 0x22);
 
         injector1.accept(cpuRunner, 0x100);
         injector2.accept(cpuRunner, 0x100);
@@ -227,7 +190,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testNegativeByteValue() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>((byte) -1);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>((byte) -1);
         injector.accept(cpuRunner, 0x100);
 
         assertEquals((byte) 0xFF, memory.read(0x100).byteValue());
@@ -235,7 +198,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testNegativeWordValue() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>(-1);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>(-1);
         injector.accept(cpuRunner, 0x100);
 
         assertEquals((byte) 0xFF, memory.read(0x100).byteValue());
@@ -244,7 +207,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testWordValueWithHighBitSet() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>(0x8000);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>(0x8000);
         injector.accept(cpuRunner, 0x100);
 
         assertEquals((byte) 0x00, memory.read(0x100).byteValue());
@@ -253,7 +216,7 @@ public class MemoryAddressTest {
 
     @Test
     public void testByteValueWithHighBitSet() {
-        MemoryAddress<TestCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0x80);
+        MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>((byte) 0x80);
         injector.accept(cpuRunner, 0x100);
 
         assertEquals((byte) 0x80, memory.read(0x100).byteValue());
