@@ -13,6 +13,7 @@ import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
+@SuppressWarnings("unchecked")
 public class TestBuilderTest {
     private SimpleCpuRunner cpuRunner;
     private SimpleCpuVerifier cpuVerifier;

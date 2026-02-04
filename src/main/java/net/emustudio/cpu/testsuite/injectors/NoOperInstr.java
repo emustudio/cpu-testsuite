@@ -4,6 +4,7 @@ package net.emustudio.cpu.testsuite.injectors;
 
 import net.emustudio.cpu.testsuite.CpuRunner;
 import net.emustudio.cpu.testsuite.injectors.internal.DefaultProgramGenerator;
+import net.jcip.annotations.NotThreadSafe;
 
 import java.util.function.Consumer;
 
@@ -13,7 +14,10 @@ import java.util.function.Consumer;
  * It is used as an injector for the test runner.
  * <p>
  * Can have 1 or more opcodes.
+ *
+ * @param <TCpuRunner> the CPU runner type
  */
+@NotThreadSafe
 public class NoOperInstr<TCpuRunner extends CpuRunner<?>> implements Consumer<TCpuRunner> {
     private final DefaultProgramGenerator<?> strategy = new DefaultProgramGenerator<>();
 
@@ -26,12 +30,22 @@ public class NoOperInstr<TCpuRunner extends CpuRunner<?>> implements Consumer<TC
         strategy.addOpcodes(opcodes);
     }
 
+    /**
+     * Injects the instruction (opcodes only, no operands) into the CPU runner.
+     *
+     * @param cpuRunner the CPU runner instance
+     */
     @Override
     public void accept(TCpuRunner cpuRunner) {
         cpuRunner.setProgram(strategy.generate());
         strategy.clearOperands();
     }
 
+    /**
+     * Returns a string representation of this instruction.
+     *
+     * @return a string showing the instruction opcodes
+     */
     @Override
     public String toString() {
         return strategy.toString();

@@ -3,15 +3,20 @@
 package net.emustudio.cpu.testsuite.injectors;
 
 import net.emustudio.cpu.testsuite.CpuRunner;
+import net.jcip.annotations.Immutable;
 
 import java.util.function.BiConsumer;
 
 /**
  * Injector of specific value at injected memory address.
- *
+ * <p>
  * Used for placing given value at memory address injected by TestRunner.
  * Based on the used constructor, it places either Byte or Integer at the injected address.
+ *
+ * @param <TCpuRunner> the CPU runner type
+ * @param <TOperand> the operand type (Byte or Integer)
  */
+@Immutable
 public class MemoryAddress<TCpuRunner extends CpuRunner<?>, TOperand extends Number> implements BiConsumer<TCpuRunner, TOperand> {
     private final int value;
     private final boolean word;
@@ -36,6 +41,13 @@ public class MemoryAddress<TCpuRunner extends CpuRunner<?>, TOperand extends Num
         word = true;
     }
 
+    /**
+     * Injects the configured value at the memory address specified by the operand.
+     * If this is a word injector, writes two bytes; otherwise writes one byte.
+     *
+     * @param cpuRunner the CPU runner instance
+     * @param address the memory address where the value should be written
+     */
     @Override
     public void accept(TCpuRunner cpuRunner, TOperand address) {
         int tmp = address.intValue();
@@ -46,6 +58,11 @@ public class MemoryAddress<TCpuRunner extends CpuRunner<?>, TOperand extends Num
         }
     }
 
+    /**
+     * Returns a string representation of this memory address injector.
+     *
+     * @return a string showing the value and whether it's a word
+     */
     @Override
     public String toString() {
         return String.format("memory[address] = %04x (word=%s)", value, word);

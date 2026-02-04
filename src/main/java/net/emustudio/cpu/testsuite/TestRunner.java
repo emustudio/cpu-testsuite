@@ -157,16 +157,28 @@ public class TestRunner<TCpuRunner extends CpuRunner<?>, TOperand extends Number
         return this;
     }
 
+    /**
+     * Clears all injectors except those marked to be kept after clear.
+     * This is typically called after each test execution.
+     */
     public void clearInjectors() {
         injectors.clear();
         injectors.addAll(injectorsToKeep);
     }
 
+    /**
+     * Clears all verifiers except those marked to be kept after clear.
+     * This is typically called after each test execution.
+     */
     public void clearVerifiers() {
         verifiers.clear();
         verifiers.addAll(verifiersToKeep);
     }
 
+    /**
+     * Clears all verifiers including those marked to be kept.
+     * This completely removes all verifiers from the test runner.
+     */
     public void clearAllVerifiers() {
         verifiers.clear();
         verifiersToKeep.clear();
@@ -241,6 +253,12 @@ public class TestRunner<TCpuRunner extends CpuRunner<?>, TOperand extends Number
         verify(context);
     }
 
+    /**
+     * Creates a clone of this test runner with the same configuration.
+     * All injectors, verifiers, flags, and settings are copied to the new instance.
+     *
+     * @return a new TestRunner instance with the same configuration
+     */
     @Override
     public TestRunner<TCpuRunner, TOperand> clone() {
         TestRunner<TCpuRunner, TOperand> runner = new TestRunner<>(cpuRunner);

@@ -10,6 +10,20 @@ import java.util.Arrays;
  */
 public class Utils {
 
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
+    private Utils() {
+        throw new AssertionError("Utility class, do not instantiate");
+    }
+
+    /**
+     * Converts an array of values to a hexadecimal string representation.
+     *
+     * @param <T> the type of array elements
+     * @param array the array to convert
+     * @return a string representation with hexadecimal values
+     */
     @SafeVarargs
     public static <T> String toHexString(T... array) {
         String[] result = new String[array.length];

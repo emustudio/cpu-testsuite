@@ -5,6 +5,7 @@ package net.emustudio.cpu.testsuite.verifiers;
 import net.emustudio.cpu.testsuite.CpuVerifier;
 import net.emustudio.cpu.testsuite.FlagsCheck;
 import net.emustudio.cpu.testsuite.RunnerContext;
+import net.jcip.annotations.Immutable;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -13,10 +14,32 @@ import java.util.function.Function;
 /**
  * Flags verifier.
  * <p>
- * Used as test verifier.
+ * Used as test verifier to check CPU flags after instruction execution.
+ * It computes the expected result using the provided operation function,
+ * evaluates flag expectations, and verifies the actual CPU flags match.
+ * <p>
+ * <b>Usage example:</b>
+ * <pre>{@code
+ * // Create a flags checker with expected flags
+ * FlagsCheck<Byte, ?> flagsCheck = new MyFlagsCheck()
+ *     .expectCarry()
+ *     .expectZero();
+ * 
+ * // Create a verifier for ADD operation
+ * FlagsVerifier<Byte> verifier = new FlagsVerifier<>(
+ *     cpuVerifier,
+ *     context -> (context.first + context.second) & 0xFF,  // Operation
+ *     flagsCheck
+ * );
+ * 
+ * // Use in test execution
+ * RunnerContext<Byte> context = new RunnerContext<>((byte)255, (byte)1, 0);
+ * verifier.accept(context);  // Verifies carry and zero flags are set
+ * }</pre>
  *
  * @param <TOperand> operands type (Byte or Integer)
  */
+@Immutable
 public class FlagsVerifier<TOperand extends Number> implements Consumer<RunnerContext<TOperand>> {
     private final Function<RunnerContext<TOperand>, Integer> operation;
     private final FlagsCheck<TOperand, ?> flagsCheck;

@@ -3,15 +3,31 @@
 package net.emustudio.cpu.testsuite.injectors;
 
 import net.emustudio.cpu.testsuite.CpuRunner;
+import net.jcip.annotations.Immutable;
 
 import java.util.function.BiConsumer;
 
 /**
  * Injector of a byte value at specified memory address.
- *
- * Given memory address, test runner will inject a 8-bit value there.
+ * <p>
+ * Given memory address, test runner will inject an 8-bit value there.
  * Higher than 8-bit value will be truncated.
+ * <p>
+ * <b>Usage example:</b>
+ * <pre>{@code
+ * // Create an injector that reads from memory address 0x1000
+ * MemoryByte<MyCpuRunner, Byte> injector = new MemoryByte<>(0x1000);
+ * 
+ * // Use in a test - the value at memory[0x1000] will be used as the operand
+ * testBuilder
+ *     .firstIsMemoryByteAt(0x1000)  // First operand from memory[0x1000]
+ *     .runWithFirstOperand(0xA0);   // Execute instruction with this operand
+ * }</pre>
+ *
+ * @param <TCpuRunner> the CPU runner type
+ * @param <TOperand> the operand type (typically Byte or Integer)
  */
+@Immutable
 public class MemoryByte<TCpuRunner extends CpuRunner<?>, TOperand extends Number> implements BiConsumer<TCpuRunner, TOperand> {
     private final int address;
 

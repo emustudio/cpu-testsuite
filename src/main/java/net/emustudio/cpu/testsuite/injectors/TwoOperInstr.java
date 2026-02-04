@@ -4,6 +4,7 @@ package net.emustudio.cpu.testsuite.injectors;
 
 import net.emustudio.cpu.testsuite.CpuRunner;
 import net.emustudio.cpu.testsuite.injectors.internal.DefaultProgramGenerator;
+import net.jcip.annotations.NotThreadSafe;
 
 /**
  * Instruction with two operands.
@@ -11,15 +12,31 @@ import net.emustudio.cpu.testsuite.injectors.internal.DefaultProgramGenerator;
  * It is used as an injector for the test runner.
  * <p>
  * The order of bytes is as follows:
+ * <ol>
+ *   <li>Initial opcodes (1 or more)</li>
+ *   <li>First Operand</li>
+ *   <li>Second Operand</li>
+ *   <li>Possibly more opcodes (0 or more)</li>
+ * </ol>
  * <p>
- * 1. Initial opcodes (1 or more)
- * 2. First Operand
- * 3. Second Operand
- * 4. Possibly more opcodes (0 or more)
+ * <b>Usage example:</b>
+ * <pre>{@code
+ * // Create an instruction with opcode 0x80 (ADD B in Intel 8080)
+ * TwoOperInstr<MyCpuRunner, Byte> instr = new TwoOperInstr<>(0x80);
+ * 
+ * // Inject and execute with two operands
+ * instr.inject(cpuRunner, (byte) 10, (byte) 20);
+ * // This generates: [0x80, 0x0A, 0x14] in memory
+ * 
+ * // With opcodes after operands
+ * TwoOperInstr<MyCpuRunner, Integer> instrWithSuffix = new TwoOperInstr<>(0xC4)
+ *     .placeOpcodesAfterOperands(0x00, 0x10);  // Complex instruction
+ * }</pre>
  *
  * @param <TCpuRunner> type of CpuRunner
  * @param <TOperand>   type of the operand (Byte or Integer)
  */
+@NotThreadSafe
 public class TwoOperInstr<TCpuRunner extends CpuRunner<?>, TOperand extends Number> implements TwoOperInjector<TCpuRunner, TOperand> {
     private final DefaultProgramGenerator<TOperand> strategy = new DefaultProgramGenerator<>();
 

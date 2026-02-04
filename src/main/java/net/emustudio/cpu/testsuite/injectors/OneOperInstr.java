@@ -4,6 +4,7 @@ package net.emustudio.cpu.testsuite.injectors;
 
 import net.emustudio.cpu.testsuite.CpuRunner;
 import net.emustudio.cpu.testsuite.injectors.internal.DefaultProgramGenerator;
+import net.jcip.annotations.NotThreadSafe;
 
 import java.util.function.BiConsumer;
 
@@ -13,14 +14,30 @@ import java.util.function.BiConsumer;
  * It is used as an injector for the test runner.
  * <p>
  * The order of bytes is as follows:
+ * <ol>
+ *   <li>Initial opcodes (1 or more)</li>
+ *   <li>Operand</li>
+ *   <li>Possibly more opcodes (0 or more)</li>
+ * </ol>
  * <p>
- * 1. Initial opcodes (1 or more)
- * 2. Operand
- * 3. Possibly more opcodes (0 or more)
+ * <b>Usage example:</b>
+ * <pre>{@code
+ * // Create an instruction with opcode 0x3E (MVI A in Intel 8080)
+ * OneOperInstr<MyCpuRunner, Byte> instr = new OneOperInstr<>(0x3E);
+ * 
+ * // Inject and execute with operand value 42
+ * instr.accept(cpuRunner, (byte) 42);
+ * // This generates: [0x3E, 0x2A] in memory
+ * 
+ * // With opcodes after operand
+ * OneOperInstr<MyCpuRunner, Integer> instrWithSuffix = new OneOperInstr<>(0xCD)
+ *     .placeOpcodesAfterOperand(0x00);  // CALL instruction
+ * }</pre>
  *
  * @param <TCpuRunner> type of the CpuRunner
  * @param <TOperand>   type of operand (Byte or Integer)
  */
+@NotThreadSafe
 public class OneOperInstr<TCpuRunner extends CpuRunner<?>, TOperand extends Number> implements BiConsumer<TCpuRunner, TOperand> {
 
     private final DefaultProgramGenerator<TOperand> strategy = new DefaultProgramGenerator<>();

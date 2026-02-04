@@ -3,6 +3,7 @@
 package net.emustudio.cpu.testsuite.injectors;
 
 import net.emustudio.cpu.testsuite.CpuRunner;
+import net.jcip.annotations.Immutable;
 
 import java.util.function.BiConsumer;
 
@@ -12,7 +13,10 @@ import java.util.function.BiConsumer;
  * Given memory address, test runner will inject a 16-bit value there.
  * Higher than 16-bit value will be truncated.
  *
+ * @param <TCpuRunner> the CPU runner type
+ * @param <TOperand> the operand type (Byte or Integer)
  */
+@Immutable
 public class MemoryWord<TCpuRunner extends CpuRunner<?>, TOperand extends Number> implements BiConsumer<TCpuRunner, TOperand> {
     private final int address;
 
@@ -28,6 +32,13 @@ public class MemoryWord<TCpuRunner extends CpuRunner<?>, TOperand extends Number
         this.address = address;
     }
 
+    /**
+     * Injects a 16-bit word value into memory at the configured address.
+     * The value is written as two bytes in little-endian order.
+     *
+     * @param cpuRunner the CPU runner instance
+     * @param value the word value to inject (higher than 16-bit values are truncated)
+     */
     @Override
     public void accept(TCpuRunner cpuRunner, TOperand value) {
         int tmp = value.intValue();
@@ -35,6 +46,11 @@ public class MemoryWord<TCpuRunner extends CpuRunner<?>, TOperand extends Number
         cpuRunner.setByte(address + 1, (tmp >>> 8) & 0xFF);
     }
 
+    /**
+     * Returns a string representation of this memory word injector.
+     *
+     * @return a string showing the memory address in hexadecimal format
+     */
     @Override
     public String toString() {
         return String.format("memoryWord[%04x]", address);

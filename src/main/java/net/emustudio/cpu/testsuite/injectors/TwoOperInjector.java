@@ -12,5 +12,12 @@ import net.emustudio.cpu.testsuite.CpuRunner;
  */
 @FunctionalInterface
 public interface TwoOperInjector<TCpuRunner extends CpuRunner<?>, TOperand extends Number> {
+    /**
+     * Injects the CPU runner and two operands into the test.
+     *
+     * @param cpuRunner the CPU runner instance for manipulating CPU state
+     * @param first the first operand
+     * @param second the second operand
+     */
     void inject(TCpuRunner cpuRunner, TOperand first, TOperand second);
 }

@@ -18,12 +18,36 @@ import java.util.List;
 @SuppressWarnings("unused")
 @Immutable
 public class RunnerContext<TOperand extends Number> {
+
+    /**
+     * The first operand value for the test (0 if not used).
+     */
     public final TOperand first;
+
+    /**
+     * The second operand value for the test (0 if not used).
+     */
     public final TOperand second;
 
+    /**
+     * The CPU flags value before test execution.
+     */
     public final int flags;
+
+    /**
+     * The program counter (or instruction pointer) value before test execution.
+     */
     public final int PC;
+
+    /**
+     * The stack pointer value before test execution.
+     */
     public final int SP;
+
+    /**
+     * An immutable list of CPU register values before test execution.
+     * Which registers are included depends on the CpuRunner implementation.
+     */
     public final List<Integer> registers;
 
     /**
@@ -80,14 +104,15 @@ public class RunnerContext<TOperand extends Number> {
         return registers.get(register);
     }
 
+    /**
+     * Returns a string representation of this runner context including all operands, flags, PC, SP, and registers.
+     *
+     * @return a string representation of this runner context
+     */
     @Override
     public String toString() {
-        return "RunnerContext{" +
-                "operands=" + Utils.toHexString(first, second) +
-                ", flags=" + Integer.toHexString(flags) +
-                ", PC=" + Integer.toHexString(PC) +
-                ", SP=" + Integer.toHexString(SP) +
-                ", registers=" + Utils.toHexString(registers.toArray()) +
-                '}';
+        return "RunnerContext{" + "operands=" + Utils.toHexString(first, second) +
+                ", flags=" + Integer.toHexString(flags) + ", PC=" + Integer.toHexString(PC) +
+                ", SP=" + Integer.toHexString(SP) + ", registers=" + Utils.toHexString(registers.toArray()) + '}';
     }
 }

@@ -1,12 +1,15 @@
+import com.vanniktech.maven.publish.JavaLibrary
+import com.vanniktech.maven.publish.JavadocJar
+import com.vanniktech.maven.publish.SourcesJar
+import com.vanniktech.maven.publish.DeploymentValidation
+
 plugins {
   id 'java-library'
-  id 'maven-publish'
-  id 'signing'
-  id("io.github.gradle-nexus.publish-plugin") version "1.1.0"
+  id "com.vanniktech.maven.publish" version "0.36.0"
 }
 
 ext {
-  emulib = '12.1'
+  emulib = '12.1.0-SNAPSHOT'
 }
 
 group 'net.emustudio'
@@ -18,7 +21,7 @@ repositories {
 }
 
 dependencies {
-  implementation "net.emustudio:emulib:${emulib}.+"
+  implementation "net.emustudio:emulib:${emulib}"
   implementation 'net.jcip:jcip-annotations:1.0'
   compileOnly 'junit:junit:4.13.2'
 
@@ -26,68 +29,37 @@ dependencies {
   testImplementation 'org.mockito:mockito-core:4.11.0'
 }
 
-java {
-  withJavadocJar()
-  withSourcesJar()
-}
+mavenPublishing {
+  coordinates("net.emustudio", "cpu-testsuite_${emulib}", version)
+  configure(new JavaLibrary(
+          new JavadocJar.Javadoc(),
+          new SourcesJar.Sources()
+  ))
 
-nexusPublishing {
-  repositories {
-    sonatype()
-  }
+  signAllPublications()
+  publishToMavenCentral(true, DeploymentValidation.PUBLISHED)
 
-  // these are not strictly required. The default timeouts are set to 1 minute. But Sonatype can be really slow.
-  // If you get the error "java.net.SocketTimeoutException: timeout", these lines will help.
-  connectTimeout = Duration.ofMinutes(3)
-  clientTimeout = Duration.ofMinutes(3)
-}
-
-publishing {
-  publications {
-    mavenJava(MavenPublication) {
-      artifactId = "cpu-testsuite_${emulib}"
-      from components.java
-      pom {
-        name = 'CPU Test Suite'
-        description = 'Generic test suite for comfortable CPU unit testing'
-        url = 'https://github.com/emustudio/cpu-testsuite'
-        licenses {
-          license {
-            name = 'GNU General Public License, Version 3.0'
-            url = 'https://www.gnu.org/licenses/gpl-3.0.txt'
-          }
-        }
-        developers {
-          developer {
-            id = 'vbmacher'
-            name = 'Peter Jakubčo'
-            email = 'pjakubco@gmail.com'
-          }
-        }
-        scm {
-          connection = 'scm:git:git@github.com:emustudio/cpu-testsuite.git'
-          developerConnection = 'scm:git:git@github.com:emustudio/cpu-testsuite.git'
-          url = 'https://github.com/emustudio/cpu-testsuite'
-        }
-        versionMapping {
-          usage('java-api') {
-            fromResolutionOf('runtimeClasspath')
-          }
-          usage('java-runtime') {
-            fromResolutionResult()
-          }
-        }
+  pom {
+    name = 'CPU Test Suite'
+    description = 'Generic test suite for comfortable CPU unit testing'
+    url = 'https://github.com/emustudio/cpu-testsuite'
+    licenses {
+      license {
+        name = 'GNU General Public License, Version 3.0'
+        url = 'https://www.gnu.org/licenses/gpl-3.0.txt'
       }
     }
-  }
-
-  repositories {
-    maven {
-      // configure publishing to a local directory for testing
-      name = "local"
-      def releasesRepoUrl = "$buildDir/repos/releases"
-      def snapshotsRepoUrl = "$buildDir/repos/snapshots"
-      url = version.endsWith("SNAPSHOT") ? snapshotsRepoUrl : releasesRepoUrl
+    developers {
+      developer {
+        id = 'vbmacher'
+        name = 'Peter Jakubčo'
+        email = 'pjakubco@gmail.com'
+      }
+    }
+    scm {
+      connection = 'scm:git:git@github.com:emustudio/cpu-testsuite.git'
+      developerConnection = 'scm:git:git@github.com:emustudio/cpu-testsuite.git'
+      url = 'https://github.com/emustudio/cpu-testsuite'
     }
   }
 }
@@ -97,10 +69,9 @@ signing {
     project.gradle.taskGraph.hasTask("publish")
   }
 
-  def signingKey = findProperty("GPG_KEY") ?: System.getenv("GPG_KEY")
-  def signingPassword = findProperty("GPG_PASSWORD") ?: System.getenv("GPG_PASSWORD")
+   def signingKey = findProperty("GPG_KEY") ?: System.getenv("GPG_KEY")
+   def signingPassword = findProperty("GPG_PASSWORD") ?: System.getenv("GPG_PASSWORD")
   useInMemoryPgpKeys(signingKey, signingPassword)
-  sign publishing.publications.mavenJava
 }
 
 javadoc {
