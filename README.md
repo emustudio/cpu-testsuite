@@ -38,7 +38,7 @@ Inspired by ["QuickCheck"](https://github.com/pholser/junit-quickcheck) property
 ```xml
 <dependency>
   <groupId>net.emustudio</groupId>
-  <artifactId>cpu-testsuite_12.1</artifactId>
+  <artifactId>cpu-testsuite_12</artifactId>
   <version>1.2.0</version>
   <scope>test</scope>
 </dependency>
@@ -47,10 +47,10 @@ Inspired by ["QuickCheck"](https://github.com/pholser/junit-quickcheck) property
 ### Gradle
 
 ```gradle
-testImplementation 'net.emustudio:cpu-testsuite_12.1:1.2.0'
+testImplementation 'net.emustudio:cpu-testsuite_12:1.2.0'
 ```
 
-**Note:** Artifact name ends with major.minor emuLib version (currently `_12.1`).
+**Note:** Artifact name ends with major emuLib version (currently `12`).
 
 ## Prerequisites
 
