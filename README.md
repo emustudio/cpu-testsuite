@@ -1,7 +1,7 @@
 # CPU Test Suite
 
-![cpu-testsuite](https://github.com/emustudio/cpu-testsuite/actions/workflows/build.yml/badge.svg?branch=master)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.7/badge.svg)](https://maven-badges.herokuapp.com/maven-central/net.emustudio/cpu-testsuite_11.7)
+[![CPU Test Suite Build](https://github.com/emustudio/cpu-testsuite/actions/workflows/build.yml/badge.svg)](https://github.com/emustudio/cpu-testsuite/actions/workflows/build.yml)
+![Maven Central Version](https://img.shields.io/maven-central/v/net.emustudio/cpu-testsuite_12)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 A declarative unit-testing framework for testing emuStudio CPU plug-ins. Write test specifications once, automatically generate comprehensive test cases for instruction correctness verification.
