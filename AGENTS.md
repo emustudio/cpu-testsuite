@@ -4,12 +4,13 @@
 - `cpu-testsuite` owns the shared CPU instruction test framework, reusable test builders, fixtures, and verification helpers used by emuStudio CPU plugins.
 
 ## Sibling Repositories
-- `/home/vbmacher/projects/emustudio/emuLib`: shared plugin API, runtime services, shared UI helpers, and reusable utilities.
-- `/home/vbmacher/projects/emustudio/edigen`: decoder/disassembler generator from `.eds` specifications.
-- `/home/vbmacher/projects/emustudio/emuStudio`: desktop application, bundled plugins, virtual computers, configs, and packaging.
-- `/home/vbmacher/projects/emustudio/emustudio.github.io`: website, user documentation, developer documentation, and release-facing pages.
-- `/home/vbmacher/projects/emustudio/edigen-gradle-plugin`: Gradle task and DSL integration for Edigen source generation.
-- `/home/vbmacher/projects/emustudio/cpu-testsuite`: shared CPU instruction test framework and reusable verification helpers.
+These repositories belong to the emuStudio project and may need related changes. They are not part of this repository. Before checking or updating any of them, verify whether the repository is available locally (typically alongside this one). If it is not present locally, do not attempt the change — report to the user that the repository is missing and what would need to be done there.
+
+- [emuLib](https://github.com/emustudio/emuLib): shared plugin API, runtime services, shared UI helpers, and reusable utilities.
+- [edigen](https://github.com/emustudio/edigen): decoder/disassembler generator from `.eds` specifications.
+- [emuStudio](https://github.com/emustudio/emuStudio): desktop application, bundled plugins, virtual computers, configs, and packaging.
+- [emustudio.github.io](https://github.com/emustudio/emustudio.github.io): website, user documentation, developer documentation, and release-facing pages.
+- [edigen-gradle-plugin](https://github.com/emustudio/edigen-gradle-plugin): Gradle task and DSL integration for Edigen source generation.
 
 ## When To Update Which Repository
 - Shared CPU test builders, fixture setup, generated test coverage, or reusable verification helpers: update `cpu-testsuite`.
