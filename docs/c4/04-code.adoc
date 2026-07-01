@@ -1,0 +1,121 @@
+= Level 4 — Code
+
+The lowest C4 level zooms into the runtime behaviour and the key type relationships of the
+execution engine. Two views are shown: the *dynamic* view (what happens for a single
+generated test case) and the *static* view (how the core types relate).
+
+== Dynamic view — one test-case execution
+
+Every generated operand pair flows through `TestRunner.accept(first, second)`. The engine
+prepares the CPU, snapshots the context, single-steps and verifies.
+
+.Executing a single generated test case
+[plantuml,c4-code-sequence,svg]
+----
+@startuml
+autonumber
+skinparam shadowing false
+
+actor "Generator" as G
+participant "TestRunner" as R
+participant "CpuRunner\n(adapter)" as CR
+participant "Injector(s)" as I
+participant "RunnerContext" as C
+participant "Verifier(s)" as V
+participant "CpuVerifier\n(adapter)" as CV
+
+G -> R : accept(first, second)
+activate R
+R -> CR : reset()
+opt flags preserved from previous run
+    R -> CR : setFlags(flagsBefore)
+end
+loop for each registered injector
+    R -> I : inject(cpuRunner, first, second)
+    I -> CR : setProgram / setByte / setRegister ...
+end
+R -> C : new RunnerContext(first, second,\nflags, PC, SP, registers)
+R -> CR : step()
+R -> CR : getFlags()
+note right of R : saved as flagsBefore for the next run
+loop for each registered verifier
+    R -> V : accept(context)
+    V -> CV : checkFlags / checkMemoryByte / checkMemoryTwoBytes
+    CV -> CV : org.junit.Assert.assertEquals
+end
+deactivate R
+@enduml
+----
+
+The sequence maps to `TestRunner.accept`: reset, optional flag restore, run injectors, build
+the immutable `RunnerContext`, `step()`, save flags, then run verifiers. A verifier failure
+throws an `AssertionError` that fails the enclosing JUnit test.
+
+== Static view — core types
+
+The framework is heavily generic. Consumers supply concrete subclasses (shaded conceptually
+as "provided by consumer") while the library provides the engine, builders and stubs.
+
+.Key types and relationships
+[plantuml,c4-code-classes,svg]
+----
+@startuml
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide empty members
+
+abstract class "CpuRunner<TCpu extends CPU>" as CpuRunner {
+  +reset()
+  +step()
+  +setProgram(short...)
+  +{abstract} getRegisters(): List<Integer>
+  +{abstract} setRegister(int, int)
+  +{abstract} getPC(): int
+  +{abstract} getSP(): int
+  +{abstract} getFlags(): int
+  +{abstract} setFlags(int)
+}
+abstract class "CpuVerifier" as CpuVerifier {
+  +checkMemoryByte(int, int)
+  +checkMemoryTwoBytes(int, int)
+  +{abstract} checkFlags(int)
+  +{abstract} checkNotFlags(int)
+}
+abstract class "FlagsCheck<T, B>" as FlagsCheck
+abstract class "TestBuilder<TOperand, B, CR, CV>" as TestBuilder
+class "TestRunner<CR, TOperand>" as TestRunner
+class "RunnerContext<TOperand>" as RunnerContext
+class "Generator" as Generator <<utility>>
+interface "TwoOperInjector<CR, TOperand>" as TwoOperInjector <<SPI>>
+interface "MemoryStub<T>" as MemoryStub <<SPI>>
+
+TestBuilder o--> TestRunner : builds & configures
+TestBuilder ..> TwoOperInjector : registers injectors
+TestBuilder ..> FlagsCheck : uses
+TestRunner "1" o--> "1" CpuRunner : drives
+TestRunner ..> RunnerContext : creates per step
+TestRunner ..> TwoOperInjector : runs (inject)
+Generator ..> TestRunner : accept(first, second)
+CpuRunner "1" o--> "1" MemoryStub : program & data
+CpuVerifier ..> MemoryStub : reads results
+TwoOperInjector ..> CpuRunner : mutate state
+
+note bottom of CpuRunner
+  Consumer provides a subclass
+  (e.g. CpuRunnerImpl)
+end note
+note bottom of CpuVerifier
+  Consumer provides a subclass
+  (e.g. CpuVerifierImpl)
+end note
+@enduml
+----
+
+== Notes
+
+* `TestRunner` implements `BiConsumer<TOperand,TOperand>`, which is exactly the shape the
+  `Generator` methods expect — that is how generation and execution are decoupled.
+* `RunnerContext` is immutable; injectors receive the `CpuRunner`, verifiers receive the
+  `RunnerContext`.
+* `MemoryStub` extends emuLib's `MemoryContext`, so the CPU plug-in reads and writes memory
+  during the test exactly as it would at runtime.

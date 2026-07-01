@@ -1,0 +1,74 @@
+= Level 1 — System Context
+
+The *CPU Test Suite* is a declarative, generative unit-testing framework. A *CPU plug-in
+developer* uses it to describe how a single CPU instruction should behave and lets the
+framework generate and execute a large number of test cases against the real CPU plug-in.
+
+.System context of the CPU Test Suite
+[plantuml,c4-system-context,svg]
+----
+@startuml
+!include <C4/C4_Context>
+LAYOUT_WITH_LEGEND()
+
+title System Context — CPU Test Suite
+
+Person(dev, "CPU Plug-in Developer", "Writes declarative test specifications that verify CPU instruction correctness")
+
+System(suite, "CPU Test Suite", "Declarative, generative JUnit test framework for emuStudio CPU plug-ins")
+
+System_Ext(plugin, "CPU Plug-in under Test", "An emuStudio CPU implementation (e.g. Intel 8080, Z80)")
+System_Ext(emulib, "emuLib", "emuStudio plug-in API & runtime helpers: CPU, MemoryContext, NumberUtils")
+System_Ext(junit, "JUnit 4", "Test runner and assertion library")
+System_Ext(build, "Build Tool (Gradle / Maven)", "Resolves the test-suite artifact and runs the test task")
+
+Rel(dev, suite, "Writes test specs with", "Java fluent API")
+Rel(dev, plugin, "Develops")
+Rel(build, junit, "Runs test classes via")
+Rel(junit, suite, "Executes tests built on")
+Rel(suite, plugin, "Resets, injects state, single-steps & verifies", "in-process")
+Rel(suite, emulib, "Uses", "CPU, MemoryContext, NumberUtils")
+Rel(plugin, emulib, "Implements", "plug-in API")
+Rel(suite, junit, "Asserts with", "org.junit.Assert")
+@enduml
+----
+
+== Actors and external systems
+
+[cols="1,3",options="header"]
+|===
+| Element | Responsibility
+
+| *CPU Plug-in Developer*
+| Author of the CPU plug-in. Writes a small, declarative test specification per instruction
+  (or instruction family) and chooses which operand combinations to generate.
+
+| *CPU Test Suite* (this system)
+| Provides the fluent specification API, generates operand combinations, prepares the CPU
+  environment, single-steps the instruction and verifies registers, flags and memory.
+
+| *CPU Plug-in under Test*
+| The subject under test. A concrete emuStudio CPU (for example Intel 8080 or Z80) that
+  implements the emuLib `CPU` interface and exposes registers, flags and memory access.
+
+| *emuLib*
+| Shared emuStudio plug-in API and runtime helpers. The suite depends on `CPU`,
+  `MemoryContext` and `NumberUtils`; the CPU plug-in implements the same API.
+
+| *JUnit 4*
+| Executes the developer's test classes and provides the assertion primitives
+  (`org.junit.Assert`) used internally by the suite's verifiers.
+
+| *Build Tool (Gradle / Maven)*
+| Resolves `net.emustudio:cpu-testsuite_<emuLibMajor>` as a `test` dependency and runs the
+  test task in which the suite operates.
+|===
+
+== Key scenario
+
+. The developer describes an instruction with a fluent `TestBuilder` (operands, expected
+  result, expected flags).
+. The developer asks a `Generator` method to produce operand combinations (exhaustive
+  `forAll*` or random `forSome*`).
+. For every generated pair the suite prepares the CPU, executes one step and verifies the
+  outcome, failing the JUnit test on the first mismatch.

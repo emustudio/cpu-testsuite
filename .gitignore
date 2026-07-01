@@ -153,3 +153,6 @@ gradle-app.setting
 .ammonite/
 .metals-sbt/
 .scala-build/
+
+# Generated C4 architecture documentation (gradle doc)
+docs/output/

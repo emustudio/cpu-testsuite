@@ -1,0 +1,73 @@
+= CPU Test Suite — C4 Architecture Documentation
+Peter Jakubčo
+:doctype: book
+:toc: left
+:toclevels: 3
+:sectnums:
+:sectnumlevels: 3
+:sectanchors:
+:icons: font
+:source-highlighter: coderay
+:experimental:
+
+This document describes the architecture of the *CPU Test Suite* using the
+https://c4model.com[C4 model]. It works top-down through the four C4 levels:
+
+* *Level 1 — System Context*: who uses the suite and what it talks to.
+* *Level 2 — Containers*: the code units that collaborate inside the test JVM.
+* *Level 3 — Components*: the internal building blocks of the library.
+* *Level 4 — Code*: the runtime flow and the core type relationships.
+
+== Overview
+
+The CPU Test Suite is a declarative, generative unit-testing framework for
+https://www.emustudio.net[emuStudio] CPU plug-ins. Instead of hand-writing individual
+assertions, a developer describes an instruction once — where its operands live, what
+result it should produce and which flags it should affect — and asks the framework to
+generate many operand combinations and execute a test for each of them.
+
+It is published as `net.emustudio:cpu-testsuite_<emuLibMajor>` and used as a `test`-scoped
+dependency by emuStudio CPU plug-ins.
+
+.At a glance
+[cols="1,3",options="header"]
+|===
+| Aspect | Value
+
+| Type | Java 11 library (JUnit 4 test framework)
+| Key dependency | emuLib (`CPU`, `MemoryContext`, `NumberUtils`)
+| Assertion backend | JUnit 4 (`org.junit.Assert`)
+| Root package | `net.emustudio.cpu.testsuite`
+| Extension points | `CpuRunner`, `CpuVerifier`, `FlagsCheck`, `TestBuilder`
+|===
+
+== Prerequisites for a CPU plug-in
+
+The suite is applicable when the CPU plug-in satisfies these constraints:
+
+* Memory is a collection of linearly ordered cells of type `Short` or `Byte`.
+* The CPU uses little-endian byte order.
+* The CPU exposes a program counter and a stack pointer.
+* Instruction operands are `Byte` (8-bit) or `Integer` (16-bit).
+
+include::c4/01-system-context.adoc[leveloffset=+1]
+
+include::c4/02-container.adoc[leveloffset=+1]
+
+include::c4/03-component.adoc[leveloffset=+1]
+
+include::c4/04-code.adoc[leveloffset=+1]
+
+== Building this documentation
+
+The diagrams are C4-PlantUML embedded in AsciiDoc and are rendered to HTML by the
+Asciidoctor Gradle plugin. Generate the HTML with:
+
+[source,bash]
+----
+./gradlew doc
+----
+
+The result is written to `docs/output/`, with `docs/output/index.html` as the entry point.
+The `doc` task requires https://graphviz.org[Graphviz] (`dot`) to be available on the
+`PATH` for diagram rendering.

@@ -6,6 +6,7 @@ import com.vanniktech.maven.publish.DeploymentValidation
 plugins {
   id 'java-library'
   id "com.vanniktech.maven.publish" version "0.36.0"
+  id 'org.asciidoctor.jvm.convert' version '4.0.5'
 }
 
 ext {
@@ -98,4 +99,28 @@ repositories {
     }
   }
   mavenCentral()
+}
+
+// C4 architecture documentation (AsciiDoc -> HTML with embedded C4-PlantUML diagrams).
+asciidoctorj {
+  modules {
+    diagram.use()
+  }
+}
+
+tasks.register('doc', org.asciidoctor.gradle.jvm.AsciidoctorTask) {
+  group = 'documentation'
+  description = 'Generates the C4 architecture documentation (HTML) into docs/output.'
+
+  baseDirFollowsSourceFile()
+  sourceDir file('docs')
+  sources {
+    include 'index.adoc'
+  }
+  outputDir file('docs/output')
+
+  outputOptions {
+    separateOutputDirs = false
+    backends = ['html5']
+  }
 }

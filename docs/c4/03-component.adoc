@@ -1,0 +1,120 @@
+= Level 3 — Components
+
+This level opens up the *CPU Test Suite Library* container and shows its internal building
+blocks and how a test flows through them. The components map directly onto the Java
+packages under `net.emustudio.cpu.testsuite`.
+
+.Components inside the CPU Test Suite Library
+[plantuml,c4-component,svg]
+----
+@startuml
+!include <C4/C4_Component>
+LAYOUT_WITH_LEGEND()
+
+title Component Diagram — CPU Test Suite Library
+
+Container(tests, "CPU Plug-in Test Suite (consumer code)", "Java + JUnit", "Test classes + CPU adapters")
+System_Ext(emulib, "emuLib", "CPU, MemoryContext, NumberUtils")
+System_Ext(junit, "JUnit 4", "Assertions")
+
+Container_Boundary(lib, "CPU Test Suite Library") {
+
+    Component(generator, "Generator", "Java — static utility", "Generates 8/16-bit unary & binary operand combinations (forAll* exhaustive, forSome* random) and drives the runner")
+    Component(builder, "TestBuilder", "Abstract fluent API", "Declarative test spec; registers injectors & verifiers and builds a TestRunner. Subclassed as ByteTestBuilder / IntegerTestBuilder")
+    Component(runner, "TestRunner", "Java — BiConsumer", "Execution engine: reset -> inject -> step -> verify for each operand pair")
+    Component(context, "RunnerContext", "Immutable value object", "Snapshot of operands + CPU state (flags, PC, SP, registers) captured before the step")
+
+    Component(cpurunner, "CpuRunner", "Abstract adapter", "Wraps CPU + memory; reset / setProgram / setRegister / setFlags / step. Implemented per CPU")
+    Component(cpuverifier, "CpuVerifier", "Abstract adapter", "Asserts flags & memory bytes/words. Implemented per CPU")
+    Component(flagscheck, "FlagsCheck", "Abstract builder", "Declarative expected-flags computation from operands & result")
+
+    Component(injectors, "Injectors", "Java package", "Prepare CPU state before the step: NoOperInstr, OneOperInstr, TwoOperInstr, MemoryByte / MemoryWord / MemoryAddress, MemoryExpand, DefaultProgramGenerator (TwoOperInjector SPI)")
+    Component(verifiers, "Verifiers", "Java package", "Check state after the step: FlagsVerifier, MemoryByteVerifier, MemoryWordVerifier")
+    ComponentDb(memory, "Memory Stubs", "In-memory MemoryContext", "MemoryStub SPI + ByteMemoryStub / ShortMemoryStub used as the CPU's memory during tests")
+}
+
+Rel(tests, builder, "Configures instruction spec with", "fluent API")
+Rel(tests, generator, "Requests operand combinations from")
+Rel(tests, cpurunner, "Provides subclass")
+Rel(tests, cpuverifier, "Provides subclass")
+Rel(tests, flagscheck, "Provides subclass")
+
+Rel(generator, runner, "Invokes with operand pairs", "BiConsumer.accept")
+Rel(builder, runner, "Configures", "adds injectors & verifiers")
+Rel(builder, injectors, "Creates")
+Rel(builder, verifiers, "Creates")
+Rel(builder, flagscheck, "Uses for flag verification")
+
+Rel(runner, cpurunner, "reset / setFlags / step / read state")
+Rel(runner, context, "Builds before step")
+Rel(runner, injectors, "Runs (inject)")
+Rel(runner, verifiers, "Runs (verify)")
+
+Rel(injectors, cpurunner, "Mutate CPU & program memory via")
+Rel(verifiers, cpuverifier, "Assert via")
+Rel(verifiers, context, "Read expected inputs from")
+
+Rel(cpurunner, memory, "Reads/writes program & data")
+Rel(cpuverifier, memory, "Reads results from")
+Rel(cpurunner, emulib, "Wraps CPU / uses NumberUtils")
+Rel(memory, emulib, "Implements MemoryContext")
+Rel(cpuverifier, junit, "assertEquals")
+@enduml
+----
+
+== Components
+
+[cols="1,3",options="header"]
+|===
+| Component | Responsibility
+
+| *Generator* (`Generator`)
+| Static utility that produces operand data and drives the test. `forAll*` methods iterate
+  every combination (exhaustive); `forSome*` methods use a configurable random subset
+  (`setRandomTestsCount`). Supports 8-bit / 16-bit, unary / binary, equal-operands and
+  predicate-filtered variants.
+
+| *TestBuilder* (`TestBuilder`, abstract)
+| The fluent, declarative specification. Chained calls describe where operands come from,
+  what result to expect and which flags to check. It translates the specification into
+  concrete injectors and verifiers registered on a `TestRunner`. Consumers use the
+  `ByteTestBuilder` / `IntegerTestBuilder` subclasses.
+
+| *TestRunner* (`TestRunner`, `BiConsumer<TOperand,TOperand>`)
+| The execution engine. For each operand pair it resets the CPU, restores preserved flags,
+  runs all injectors, snapshots a `RunnerContext`, single-steps the CPU and runs all
+  verifiers. Supports keeping/clearing injectors and verifiers between runs.
+
+| *RunnerContext* (`RunnerContext`, immutable)
+| Value object passed to injectors and verifiers. Holds both operands and the CPU state
+  (flags, PC, SP, registers) captured just before the step, so verifiers can compute the
+  expected result.
+
+| *CpuRunner* (`CpuRunner<TCpu>`, abstract)
+| Adapter that wraps the CPU and a memory stub and exposes a uniform control surface:
+  `reset`, `setProgram`, `setByte`, `step`, register/flag accessors. Implemented per CPU.
+
+| *CpuVerifier* (`CpuVerifier`, abstract)
+| Adapter for assertions. Provides `checkMemoryByte` / `checkMemoryTwoBytes`; consumers add
+  `checkFlags` / `checkNotFlags`. Uses JUnit assertions under the hood.
+
+| *FlagsCheck* (`FlagsCheck`, abstract)
+| Fluent, per-CPU description of which flags should be set/cleared, optionally conditioned
+  on operands and result via `expectFlagOnlyWhen`.
+
+| *Injectors* (`injectors` package)
+| Building blocks that prepare CPU state before the step. Instruction injectors
+  (`NoOperInstr`, `OneOperInstr`, `TwoOperInstr`) assemble opcodes and operands into a
+  program via `DefaultProgramGenerator`; memory injectors (`MemoryByte`, `MemoryWord`,
+  `MemoryAddress`, `MemoryExpand`) seed data memory. `TwoOperInjector` is the SPI.
+
+| *Verifiers* (`verifiers` package)
+| Building blocks that check state after the step: `FlagsVerifier` (expected flags from a
+  `FlagsCheck` and an operation), `MemoryByteVerifier` and `MemoryWordVerifier` (expected
+  value at a computed address).
+
+| *Memory Stubs* (`memory` package)
+| In-memory `MemoryContext` implementations acting as the CPU's memory during tests.
+  `MemoryStub` is the SPI; `ByteMemoryStub` and `ShortMemoryStub` differ in cell width and
+  honour a little-endian word-reading strategy.
+|===

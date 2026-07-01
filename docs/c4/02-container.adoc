@@ -1,0 +1,72 @@
+= Level 2 — Containers
+
+The CPU Test Suite is shipped as a single Java library (`cpu-testsuite_<emuLibMajor>.jar`).
+At runtime everything executes *in-process*, inside the JUnit test JVM started by the build
+tool. The interesting "containers" are therefore the collaborating code units that live in
+that test process.
+
+.Containers participating in a test run
+[plantuml,c4-container,svg]
+----
+@startuml
+!include <C4/C4_Container>
+LAYOUT_WITH_LEGEND()
+
+title Container Diagram — CPU Test Suite (inside the JUnit test JVM)
+
+Person(dev, "CPU Plug-in Developer", "Writes tests & CPU-specific adapters")
+
+System_Ext(junit, "JUnit 4", "Test runner & assertions")
+System_Ext(emulib, "emuLib", "CPU, MemoryContext, NumberUtils")
+
+System_Boundary(jvm, "Test Execution (JVM)") {
+    Container(tests, "CPU Plug-in Test Suite (consumer code)", "Java + JUnit", "Instruction test classes plus CPU-specific adapters: CpuRunnerImpl, CpuVerifierImpl, FlagsBuilderImpl and a ByteTestBuilder / IntegerTestBuilder subclass")
+    Container(lib, "CPU Test Suite Library", "Java 11 library — cpu-testsuite.jar", "Fluent test builders, operand generators, state injectors, result verifiers and in-memory memory stubs")
+    Container(plugin, "CPU Plug-in", "Java — emuStudio plug-in", "The CPU and its memory implementation under test")
+}
+
+Rel(dev, tests, "Writes & maintains")
+Rel(junit, tests, "Discovers & runs")
+Rel(tests, lib, "Configures tests via fluent API; extends abstract adapters", "TestBuilder, CpuRunner, CpuVerifier, FlagsCheck")
+Rel(lib, plugin, "Drives (reset / step) & inspects state of", "via adapters")
+Rel(lib, emulib, "Uses", "CPU, MemoryContext, NumberUtils")
+Rel(lib, junit, "Asserts with", "org.junit.Assert")
+Rel(plugin, emulib, "Implements", "plug-in API")
+@enduml
+----
+
+== Containers
+
+[cols="1,1,2",options="header"]
+|===
+| Container | Technology | Responsibility
+
+| *CPU Plug-in Test Suite (consumer code)*
+| Java + JUnit
+| Lives in the CPU plug-in's `src/test`. Contains the instruction test classes and the thin
+  CPU-specific *adapters* that bind the generic framework to one CPU: a `CpuRunner`
+  subclass, a `CpuVerifier` subclass, an optional `FlagsCheck` subclass, and a concrete
+  `TestBuilder` (extending `ByteTestBuilder` / `IntegerTestBuilder`).
+
+| *CPU Test Suite Library*
+| Java 11 library
+| This project. Supplies the fluent builder API, the operand generators, the injector and
+  verifier building blocks, the execution engine and the memory stubs. Contains no
+  CPU-specific knowledge — that is provided through the adapter subclasses.
+
+| *CPU Plug-in*
+| Java (emuStudio plug-in)
+| The unit under test. The library never touches CPU internals directly; it always goes
+  through the developer-supplied adapters, which in turn call the plug-in.
+|===
+
+== Why the library needs adapters
+
+Every CPU has different registers, flags and encodings, so the library is deliberately
+generic. The consumer closes the gap by extending four abstract seams:
+
+* `CpuRunner` — how to reset the CPU, set registers/flags and single-step.
+* `CpuVerifier` — how to assert that flags are (not) set.
+* `FlagsCheck` — how each flag is computed from operands and result (optional).
+* `TestBuilder` — a CPU-flavoured fluent entry point (typically trivial subclasses of
+  `ByteTestBuilder` / `IntegerTestBuilder`).
