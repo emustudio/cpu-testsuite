@@ -30,6 +30,7 @@ public class TestBuilderTest {
     public void setUp() {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         CPU mockCpu = mock(CPU.class);
+        when(mockCpu.getAddressSpaceSize()).thenReturn(65536);
         cpuRunner = new SimpleCpuRunner(mockCpu, memory);
         cpuVerifier = new SimpleCpuVerifier(memory);
         builder = new ConcreteTestBuilder(cpuRunner, cpuVerifier);

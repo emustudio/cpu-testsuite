@@ -32,6 +32,7 @@ public class TestRunnerTest {
     public void setUp() {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         CPU mockCpu = mock(CPU.class);
+        when(mockCpu.getAddressSpaceSize()).thenReturn(65536);
 
         // Capture the CPU listener so we can simulate state changes
         doAnswer(new Answer<Void>() {

@@ -23,9 +23,11 @@ import static org.junit.Assert.assertEquals;
 @NotThreadSafe
 public abstract class CpuRunner<TCpu extends CPU> {
     /**
-     * Minimum memory size in bytes. Set to 64KB to accommodate most CPU architectures
-     * that use 16-bit addressing.
+     * Legacy 16-bit address-space size.
+     *
+     * @deprecated use {@link CPU#getAddressSpaceSize()} instead
      */
+    @Deprecated
     public static final int MIN_MEMORY_SIZE = 65536;
 
     private final RunStateListenerStub runStateListener = new RunStateListenerStub();
@@ -54,13 +56,13 @@ public abstract class CpuRunner<TCpu extends CPU> {
     }
 
     /**
-     * Ensures the program memory is at least the specified size.
+     * Ensures the program memory covers the CPU address space and is at least the specified size.
      * If the current program size is smaller, it expands the program array while preserving existing content.
      *
      * @param length the minimum required program size in bytes
      */
     public void ensureProgramSize(int length) {
-        length = Math.max(length, MIN_MEMORY_SIZE);
+        length = Math.max(length, cpu.getAddressSpaceSize());
         if (program.length < length) {
             // Preserve existing memory content
             short[] newProgram = new short[length];

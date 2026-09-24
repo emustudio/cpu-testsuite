@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class MemoryWordTest {
     private SimpleCpuRunner cpuRunner;
@@ -20,6 +21,7 @@ public class MemoryWordTest {
     public void setUp() {
         memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         CPU mockCpu = mock(CPU.class);
+        when(mockCpu.getAddressSpaceSize()).thenReturn(65536);
         cpuRunner = new SimpleCpuRunner(mockCpu, memory);
     }
 
