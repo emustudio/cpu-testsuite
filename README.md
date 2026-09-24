@@ -4,34 +4,25 @@
 ![Maven Central Version](https://img.shields.io/maven-central/v/net.emustudio/cpu-testsuite_12)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
-A declarative unit-testing framework for testing emuStudio CPU plug-ins. Write test specifications once, automatically generate comprehensive test cases for instruction correctness verification.
+CPU Test Suite is a declarative test framework for emuStudio CPU plug-ins. A test describes how operands are injected, executes one CPU instruction, and verifies registers, flags, or memory across generated operand values.
 
-Inspired by ["QuickCheck"](https://github.com/pholser/junit-quickcheck) property-based testing.
+The library provides the reusable execution engine. Each CPU plug-in supplies small adapters for its own registers and flags.
 
-## Features
+## Requirements
 
-- 🎲 **Automatic test case generation** - generates 8-bit, 16-bit, unary, and binary test cases
-- 🔧 **Declarative test specification** - fluent Builder pattern API
-- ⚙️ **Automatic environment setup** - manages memory, registers, and CPU flags
-- 🚀 **Minimal boilerplate** - reusable test configurations
-- 📊 **Comprehensive coverage** - easily test all instruction variants
+- Java 11 or later for consumers.
+- An emuStudio CPU implementing the emuLib `CPU` contract.
+- A linearly addressed `Byte` or `Short` memory context.
+- Little-endian instruction operands. Memory stubs can still use either emuLib word-reading strategy.
+- JUnit 4 in the consumer test runtime.
 
-## Table of Contents
+The artifact suffix is the compatible emuLib major version. For emuLib 12:
 
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Core Concepts](#core-concepts)
-- [Implementing Required Classes](#implementing-required-classes)
-- [API Reference](#api-reference)
-  - [TestBuilder Methods](#testbuilder-api-reference)
-  - [Generator Methods](#generator-api-reference)
-  - [Memory Operations](#memory-operations)
-- [Advanced Usage](#advanced-usage-patterns)
-- [Troubleshooting](#troubleshooting)
-- [Examples](#examples)
-- [License](#license)
+### Gradle
 
-## Installation
+```groovy
+testImplementation 'net.emustudio:cpu-testsuite_12:1.2.0'
+```
 
 ### Maven
 
@@ -44,670 +35,161 @@ Inspired by ["QuickCheck"](https://github.com/pholser/junit-quickcheck) property
 </dependency>
 ```
 
-### Gradle
+## How a test runs
 
-```gradle
-testImplementation 'net.emustudio:cpu-testsuite_12:1.2.0'
-```
+For every generated operand pair, `TestRunner` performs the same sequence:
 
-**Note:** Artifact name ends with major emuLib version (currently `12`).
+1. Reset the CPU.
+2. Restore flags retained from the previous case, if any.
+3. Run all configured injectors.
+4. Capture a `RunnerContext` containing operands and pre-execution CPU state.
+5. Execute one CPU step.
+6. Run all configured verifiers.
 
-## Prerequisites
+The main types are:
 
-The CPU Test Suite can be used if your CPU plugin meets these requirements:
+| Type | Responsibility |
+| --- | --- |
+| `Generator` | Produces exhaustive, random, or explicit operand values. |
+| `TestBuilder` | Fluent base class that assembles injectors and verifiers. |
+| `TestRunner` | Executes the reset → inject → step → verify lifecycle. |
+| `CpuRunner` | CPU-specific adapter for execution, registers, flags, and memory. |
+| `CpuVerifier` | CPU-specific assertion adapter. |
+| `FlagsCheck` | Optional CPU-specific flag expectation builder. |
+| `RunnerContext` | Immutable snapshot passed to verifiers. |
 
-- ✅ Operating memory is a collection of linearly ordered cells
-- ✅ Memory cell type is `Short` or `Byte`
-- ✅ CPU uses little-endian byte order
-- ✅ CPU has a program counter register (or instruction pointer)
-- ✅ CPU has a stack pointer register
-- ✅ Instruction operands are either `Byte` (8-bit) or `Integer` (16-bit)
+## Consumer setup
 
-## Quick Start
+A CPU plug-in normally defines:
 
-### Overview
+- a `CpuRunner` subclass implementing register, flag, PC, and SP access;
+- a `CpuVerifier` subclass implementing flag assertions;
+- optionally, a `FlagsCheck` subclass describing flag semantics;
+- a concrete `TestBuilder` specialized for `Byte` or `Integer` operands.
 
-Testing a CPU instruction involves:
-
-1. **Setup** - Configure initial CPU state (registers, memory, flags)
-2. **Execute** - Run the instruction
-3. **Verify** - Check the output (registers, flags, memory)
-4. **Repeat** - Automatically for generated test cases
-
-### Required Implementations
-
-Each CPU requires custom implementations of:
-
-- **`CpuRunner`** - Abstract class managing CPU execution environment
-- **`CpuVerifier`** - Abstract class for verifying CPU state
-- **`FlagsCheck`** - Optional abstract class for flag computation
-- **`TestBuilder`** - Concrete class extending `ByteTestBuilder` or `IntegerTestBuilder`
-
-### Simple Example
-
-Here's a minimal example testing an 8080 SUB instruction:
+`ByteTestBuilder`, `IntegerTestBuilder`, register helpers, and pair helpers are consumer conventions, not classes supplied by this library. They should extend the generic base directly, for example:
 
 ```java
-import static net.emustudio.cpu.testsuite.Generator.*;
-import net.emustudio.cpu.testsuite.memory.ShortMemoryStub;
-import net.emustudio.intel8080.impl.suite.CpuRunnerImpl;
-import net.emustudio.intel8080.impl.suite.CpuVerifierImpl;
-import org.junit.After;
-import org.junit.Before;
+final class ByteTestBuilder extends TestBuilder<
+        Byte, ByteTestBuilder, MyCpuRunner, MyCpuVerifier> {
 
-
-public class CpuTest {
-    private CpuRunnerImpl cpuRunnerImpl;
-    private CpuVerifierImpl cpuVerifierImpl;
-    private CpuImpl cpu;
-
-    @Before
-    public void setUp() throws PluginInitializationException {
-        ShortMemoryStub memoryStub = new ShortMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
-
-        cpu = new CpuImpl(...);
-        // simulate emuStudio boot
-        cpu.initialize(...);
-
-        cpuRunnerImpl = new CpuRunnerImpl(cpu, memoryStub);
-        cpuVerifierImpl = new CpuVerifierImpl(cpu, memoryStub);
-
-        Generator.setRandomTestsCount(10); // How many test cases should be generated
-    }
-    
-    @After
-    public void tearDown() {
-        cpu.destroy();
-    }
-    
-    @Test
-    public void testSUB() {
-        // ByteTestBuilder specifies that instruction operands are bytes 
-        ByteTestBuilder test = new ByteTestBuilder(cpuRunnerImpl, cpuVerifierImpl)
-                .firstIsRegister(REG_A)
-                .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF))
-                .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity())
-                .keepCurrentInjectorsAfterRun();
-        
-        forSome8bitBinaryWhichEqual(
-                test.run(0x97)
-        );
-        forSome8bitBinary(
-                test.secondIsRegister(REG_B).run(0x90),
-                test.secondIsRegister(REG_C).run(0x91),
-                test.secondIsRegister(REG_D).run(0x92),
-                test.secondIsRegister(REG_E).run(0x93),
-                test.secondIsRegister(REG_H).run(0x94),
-                test.secondIsRegister(REG_L).run(0x95),
-                test.setPair(REG_PAIR_HL, 1).secondIsMemoryByteAt(1).run(0x96)
-        );
-    }
-}
-```
-
-It might seem complex, but all makes sense. At first, we need to know, if we operate with bytes or integers (words).
-Therefore, we create new `ByteTestBuilder`. There exists also `IntegerTestBuilder` class for operating with 16-bit values.
-
-Instruction `SUB` takes 1 argument - the register, e.g. `SUB B`, which substracts register `B` from register `A`.
-In other words:
-
-```
-SUB B = A - B
-```
-
-Generally, instruction `SUB` will always be evaluated as `A - register`. Therefore we know, that first operand is always
-register `A`:
-
-```java
-   .firstIsRegister(REG_A)
-```
-
-NOTE: Constant `REG_A` is defined in our 8080 CPU.
-
-That's it for preparing the environment. Now, we want to verify, that after performing the "subtract" operation,
-we get result in register `A` with the correct value:
-
-```java
-    .verifyRegister(REG_A, context -> (context.first & 0xFF) - (context.second & 0xFF))
-```
-
-We supply the computation based on the two values, which will be *generated* later. The values are accessible from
-`context` object, as member values `context.first` and `context.second`. What you see above is a lambda (feature from
-Java 8), taking the testing `context` object, and performing the subtract operation with given values.
- 
-NOTE: Here, you must be very careful; if you write the computation wrongly, the test will expect wrong results.
-    
-Also, the instruction is affecting flags in CPU. It is enough to specify that with the following statement:
- 
-```java
-    .verifyFlagsOfLastOp(new FlagsBuilderImpl().sign().zero().carry().auxCarry().parity())
-```
- 
-Here, we are saying: verify flags of the last operation (taken from the previous line - the subtract), and we supply
-the flags using `FlagsBuilderImpl` class - sign, zero, carry, auxiliary carry and parity. The class however must be
-implemented manually, in order to preserve the generality of the Test Suite. Each CPU has different flags with
-different semantics. But don't worry, it is not difficult.
-
-And we're almost done with the test specification. Now, we must say that after we create a test, we want to keep
-the environment we set up before (in our case setting that the first operand will be stored in register `A` - before
-the operation). We do this with line:
- 
-```java
-    .keepCurrentInjectorsAfterRun();
-```
-
-And now, we can 'generate' tests for various random-generated combinations of operands. This is the strongest feature
-of the suite, and frees us from creating manual examples of the instruction input and output data. It saves a lot of
-time. We just say:
-
-```java
-Generator.forSome8bitBinaryWhichEqual(
-        test.run(0x97)
-);
-```
-
-And the generator will generate some 8-bit pair of values, which equal. And we run the test for all the generated values
-on a `SUB A` instruction (which has opcode `0x97`). Here, is the trick. In this statement, we test instruction `SUB A`,
-which means:
-
-```
-SUB A = A - A
-```
-
-So in order to have valid test, and we have binary values from generator (we need to have both `context.first` and
-`context.second`), we need to have them *equal*, because they represent the same value - in register `A`.
-
-The final part of the test is much more obvious:
-
-```java
-Generator.forSome8bitBinary(
-        test.secondIsRegister(REG_B).run(0x90),
-        test.secondIsRegister(REG_C).run(0x91),
-        test.secondIsRegister(REG_D).run(0x92),
-        test.secondIsRegister(REG_E).run(0x93),
-        test.secondIsRegister(REG_H).run(0x94),
-        test.secondIsRegister(REG_L).run(0x95),
-        test.setPair(REG_PAIR_HL, 1).secondIsMemoryByteAt(1).run(0x96)
-);
-```
-
-Here we want to run 7 tests, for each `SUB` variation - for registers `B`, `C`, `D`, etc. So for the specific test we
-must say, that the second generated operand will be stored in the given register, before we actually 'run' the test.
-Since we did not specify `keepCurrentInjectorsAfterRun()` after this step, the next step will not remember the previous
-setting for the second operand. Only the first operand, for register `A` will be remembered for all tests.
-
-The last line is interesting, with preparing register pair `HL=1` and second operand to the memory at address `1`, we
-can safely run `SUB M` with opcode `0x96`, which actually does the following:
-
-```
-SUB M = A - [HL]
-```
-
-For more information, see Javadoc of the project, and real usage in available emuStudio CPU plug-ins.
-
----
-
-## Core Concepts
-
-**Test Execution Flow:** Reset → Inject State → Execute → Verify → Repeat
-
-**Key Components:**
-- **CpuRunner** - Manages CPU execution environment (extend abstract class)
-- **CpuVerifier** - Verifies CPU state after execution (extend abstract class)
-- **TestBuilder** - Fluent API for test specification (extend Byte/IntegerTestBuilder)
-- **Generator** - Produces test cases (built-in static methods)
-- **FlagsCheck** - Optional flag computation (extend abstract class)
-
-**Operand Types:** Use `ByteTestBuilder` for 8-bit or `IntegerTestBuilder` for 16-bit operations.
-
----
-
-## Implementing Required Classes
-
-### 1. Implementing CpuRunner
-
-```java
-public class MyCpuRunner extends CpuRunner<MyCpu> {
-    public MyCpuRunner(MyCpu cpu, MemoryStub<?> memoryStub) {
-        super(cpu, memoryStub);
-    }
-    
-    public int getPC() { return cpu.getProgramCounter(); }
-    public int getSP() { return cpu.getStackPointer(); }
-    public List<Integer> getRegisters() { /* return all register values */ }
-    public void setRegister(int register, int value) { /* set by index */ }
-    public void setFlags(int mask) { cpu.setFlags(mask); }
-    public int getFlags() { return cpu.getFlags(); }
-}
-```
-
-**Required:** Implement 6 abstract methods. **Inherited:** `setByte()`, `setProgram()`, `reset()`, `step()`
-
-### 2. Implementing CpuVerifier
-
-```java
-public class MyCpuVerifier extends CpuVerifier {
-    public MyCpuVerifier(MyCpu cpu, MemoryStub<?> memoryStub) {
-        super(memoryStub);
-    }
-    
-    public void checkFlags(int expectedFlags) { /* assert flags set */ }
-    public void checkNotFlags(int expectedNotFlags) { /* assert flags not set */ }
-}
-```
-
-**Required:** Implement 2 methods. **Inherited:** `checkMemoryByte()`, `checkMemoryTwoBytes()`
-
-### 3. Implementing FlagsCheck (Optional)
-
-```java
-public class MyFlagsCheck extends FlagsCheck<Integer, MyFlagsCheck> {
-    public MyFlagsCheck zero() {
-        expectFlagOnlyWhen(FLAG_ZERO, (ctx, result) -> (result.intValue() & 0xFFFF) == 0);
-        return this;
-    }
-    public MyFlagsCheck carry() {
-        expectFlagOnlyWhen(FLAG_CARRY, (ctx, result) -> result.intValue() > 0xFFFF);
-        return this;
-    }
-    // ... other flags
-}
-```
-
-**Methods:** `expectFlagOnlyWhen()`, `or()`, `reset()`, `switchFirstAndSecond()`
-
-### 4. Creating TestBuilder
-
-```java
-public class ByteTestBuilder extends TestBuilder<Byte, ByteTestBuilder, 
-        MyCpuRunner, MyCpuVerifier> {
-    public ByteTestBuilder(MyCpuRunner runner, MyCpuVerifier verifier) {
+    ByteTestBuilder(MyCpuRunner runner, MyCpuVerifier verifier) {
         super(runner, verifier);
     }
-    
-    // Add CPU-specific methods like firstIsRegister(), verifyRegister()
-}
-```
 
----
-
-## API Reference
-
-### TestBuilder API Reference
-
-#### Environment Setup
-
-| Method | Purpose | Example |
-|--------|---------|---------|
-| `.setFlags(mask)` | Set CPU flags before execution | `.setFlags(0b10101010)` |
-| `.registerIsRandom(reg, max)` | Set register to random value | `.registerIsRandom(REG_C, 255)` |
-| `.expandMemory(fn)` | Ensure memory size | `.expandMemory(op -> op.intValue() + 100)` |
-```java
-// First/second operand is byte at memory address
-.firstIsMemoryByteAt(0x100)
-.secondIsMemoryByteAt(0x200)
-
-// First/second operand is word (16-bit) at memory address
-.firstIsMemoryWordAt(0x100)
-.secondIsMemoryWordAt(0x200)
-
-// Use first/second operand as memory address containing a value
-.firstIsMemoryAddressByte(0x42)      // Address contains byte 0x42
-.secondIsMemoryAddressWord(0x1234)   // Address contains word 0x1234
-
-// Complex: first is address, write second as word at that address
-.firstIsAddressAndSecondIsMemoryWord()
-.secondIsAddressAndFirstIsMemoryWord()
-
-// Complex: first is address, write second as byte at that address
-.firstIsAddressAndSecondIsMemoryByte()
-.secondIsAddressAndFirstIsMemoryByte()
-
-// Ensure memory is large enough for address calculation
-.expandMemory(operand -> operand.intValue() + 100)
-```
-
-### Verification Methods
-
-#### Register Verification (Custom)
-```java
-// Verify register contains expected value
-.verifyRegister(REG_A, context -> context.first + context.second)
-```
-
-#### Flag Verification
-```java
-// Verify flags with operator
-.verifyFlags(new MyFlagsCheck().sign().zero(), 
-             context -> context.first - context.second)
-
-// Verify flags of last operation (reuses last operator)
-.verifyFlagsOfLastOp(new MyFlagsCheck().carry().parity())
-```
-
-#### Memory Verification
-```java
-// Verify byte at address
-.verifyByte(0x100, context -> context.first & 0xFF)
-
-// Verify byte at address from last operation
-.verifyByte(0x100)  // Uses last operation result
-
-// Verify byte at computed address
-.verifyByte(context -> context.first.intValue(), 
-            context -> context.second)
-
-// Verify word (16-bit) at address
-.verifyWord(context -> 0x100, context -> context.first + context.second)
-```
-
-#### Custom Verification
-```java
-// Add custom verification logic
-.verifyAll(
-    context -> assertEquals(expected, actual),
-    context -> assertTrue(condition)
-)
-```
-
-### State Management
-
-```java
-// Keep injectors after run() - reuse setup for multiple tests
-.keepCurrentInjectorsAfterRun()
-
-// Keep verifiers after run() - reuse verifications
-.clearOtherVerifiersAfterRun()
-
-// Clear all verifiers including kept ones
-.clearAllVerifiers()
-```
-
-### Execution Methods
-
-```java
-// Run with no-operand instruction
-.run(0x90, 0x91)  // Returns TestRunner
-
-// Run with first operand injected into instruction
-.runWithFirstOperand(0x40)
-
-// Run with second operand injected into instruction
-.runWithSecondOperand(0x41)
-
-// Run with first operand as 8-bit value
-.runWithFirst8bitOperand(0x06)
-
-// Run with first operand as 8-bit, twice
-.runWithFirst8bitOperandTwoTimes(0x40)
-
-// Run with both operands, opcodes after operands
-.runWithBothOperandsWithOpcodeAfter(0xFF, 0x40)
-
-// Run with first 8-bit operand, opcode after
-.runWithFirst8bitOperandWithOpcodeAfter(0xFF, 0x06)
-```
-
-### Debugging Methods
-
-```java
-// Enable debug output for injectors
-.printInjectingProcess()
-
-// Print operand values during test
-.printOperands()
-
-// Print register value during test
-.printRegister(REG_A)
-```
-
----
-
-### Generator API
-
-**Configuration:** `Generator.setRandomTestsCount(10)` - Set random test count (default: 25)
-
-| Operand Type | Method | Test Count |
-|--------------|--------|------------|
-| **8-bit Binary** | `forAll8bitBinary(runners...)` | 65,536 (256×256) |
-| | `forSome8bitBinary(runners...)` | Configurable |
-| | `forAll8bitBinaryWhichEqual(runner)` | 256 |
-| | `forSome8bitBinaryWhichEqual(runner)` | Configurable |
-| **16-bit Binary** | `forAll16bitBinary(from1, from2, runner)` | Large (from start values) |
-| | `forSome16bitBinary(from1, from2, runner)` | Configurable |
-| | `forAll16bitBinaryWhichEqual(runner)` | 65,536 |
-| | `forSome16bitBinaryWhichEqual(runner)` | Configurable |
-| **8-bit Unary** | `forAll8bitUnary(runner)` | 256 |
-| | `forSome8bitUnary(runner)` | Configurable |
-| | `forGivenOperand(operand, runner)` | 1 |
-| **16-bit Unary** | `forAll16bitUnary(from, runner)` | Large (from start) |
-| | `forSome16bitUnary(from, runner)` | Configurable |
-| **Gapped Range** | `forGivenOperandsAndSingleOperand(s,e1,s2,e, r)` | Range with gap |
-
----
-
-## Memory Operations
-
-**Memory Stubs:** `ByteMemoryStub` and `ShortMemoryStub` with `NumberUtils.Strategy.LITTLE_ENDIAN` or `BIG_ENDIAN`
-
-```java
-// CpuRunner - Write
-cpuRunner.setByte(0x100, 0x42);
-cpuRunner.setProgram(0x90, 0x91, 0x92);
-cpuRunner.ensureProgramSize(1024);
-
-// CpuVerifier - Verify
-cpuVerifier.checkMemoryByte(0x100, 0x42);
-cpuVerifier.checkMemoryTwoBytes(0x100, 0x1234);
-```
-
----
-
-## Advanced Usage Patterns
-
-### Testing Instructions with Multiple Variants
-
-```java
-@Test
-public void testADD() {
-    ByteTestBuilder test = new ByteTestBuilder(cpuRunner, cpuVerifier)
-        .firstIsRegister(REG_A)
-        .verifyRegister(REG_A, context -> context.first + context.second)
-        .verifyFlagsOfLastOp(new FlagsCheck().sign().zero().carry())
-        .keepCurrentInjectorsAfterRun();
-    
-    // Test all register variants
-    forSome8bitBinary(
-        test.secondIsRegister(REG_B).run(0x80),
-        test.secondIsRegister(REG_C).run(0x81),
-        test.secondIsRegister(REG_D).run(0x82),
-        test.secondIsRegister(REG_E).run(0x83),
-        test.secondIsRegister(REG_H).run(0x84),
-        test.secondIsRegister(REG_L).run(0x85)
-    );
-}
-```
-
-### Testing Memory-Based Instructions
-
-```java
-@Test
-public void testMOV_M() {
-    ByteTestBuilder test = new ByteTestBuilder(cpuRunner, cpuVerifier)
-        .setPair(REG_PAIR_HL, 0x1000)
-        .firstIsRegister(REG_A)
-        .verifyByte(0x1000, context -> context.first);
-    
-    forSome8bitUnary(
-        test.run(0x77)  // MOV M,A - store A at [HL]
-    );
-}
-```
-
-### Testing 16-bit Instructions
-
-```java
-@Test
-public void testADD_HL_BC() {
-    IntegerTestBuilder test = new IntegerTestBuilder(cpuRunner, cpuVerifier)
-        .firstIsPair(REG_PAIR_HL)
-        .secondIsPair(REG_PAIR_BC)
-        .verifyPair(REG_PAIR_HL, context -> context.first + context.second)
-        .verifyFlagsOfLastOp(new FlagsCheck().carry());
-    
-    forSome16bitBinary(0, 0,
-        test.run(0x09)
-    );
-}
-```
-
-### Testing with Specific Values
-
-```java
-@Test
-public void testRotateCarry() {
-    ByteTestBuilder test = new ByteTestBuilder(cpuRunner, cpuVerifier)
-        .firstIsRegister(REG_A)
-        .setFlags(FLAG_CARRY)  // Set carry before operation
-        .verifyRegister(REG_A, context -> {
-            int value = context.first & 0xFF;
-            return ((value << 1) | 1) & 0xFF;  // Rotate left with carry
-        });
-    
-    forSome8bitUnary(
-        test.run(0x17)  // RAL - rotate A left through carry
-    );
-}
-```
-
-### Conditional Flag Verification
-
-```java
-public class MyFlagsCheck extends FlagsCheck<Integer, MyFlagsCheck> {
-    public MyFlagsCheck overflow() {
-        // Overflow only on signed arithmetic
-        expectFlagOnlyWhen(FLAG_OVERFLOW, (context, result) -> {
-            int a = context.first.intValue();
-            int b = context.second.intValue();
-            int r = result.intValue();
-            // Overflow if sign of result differs from expected
-            boolean aPositive = (a & 0x8000) == 0;
-            boolean bPositive = (b & 0x8000) == 0;
-            boolean rPositive = (r & 0x8000) == 0;
-            return (aPositive == bPositive) && (aPositive != rPositive);
-        });
+    ByteTestBuilder firstIsRegister(int register) {
+        runner.injectFirst((cpu, value) ->
+                cpu.setRegister(register, Byte.toUnsignedInt(value)));
         return this;
     }
 }
 ```
 
-### Reusing Test Configuration
+CPU-specific helpers can then make instruction tests concise:
 
 ```java
-@Test
-public void testArithmeticInstructions() {
-    ByteTestBuilder base = new ByteTestBuilder(cpuRunner, cpuVerifier)
+ByteTestBuilder test = new ByteTestBuilder(cpuRunner, cpuVerifier)
         .firstIsRegister(REG_A)
-        .secondIsRegister(REG_B)
-        .keepCurrentInjectorsAfterRun();
-    
-    // ADD
-    base.verifyRegister(REG_A, context -> context.first + context.second)
-        .verifyFlagsOfLastOp(new FlagsCheck().sign().zero().carry());
-    forSome8bitBinary(base.run(0x80));
-    
-    // SUB - clear previous verifiers, add new ones
-    base.clearAllVerifiers()
-        .verifyRegister(REG_A, context -> context.first - context.second)
-        .verifyFlagsOfLastOp(new FlagsCheck().sign().zero().carry());
-    forSome8bitBinary(base.run(0x90));
-}
+        .secondIsRegister(REG_B)       // consumer-defined helper
+        .verifyRegister(               // consumer-defined helper
+                REG_A,
+                context -> Byte.toUnsignedInt(context.first)
+                        + Byte.toUnsignedInt(context.second));
+
+Generator.forSome8bitBinary(test.run(0x80));
 ```
 
-### Complex Memory Patterns
+The expectation lambda is test logic: an incorrect expression produces an incorrect expected result.
 
-```java
-@Test
-public void testBlockMove() {
-    ByteTestBuilder test = new ByteTestBuilder(cpuRunner, cpuVerifier)
-        .firstIsMemoryByteAt(0x1000)        // Source
-        .secondIsMemoryAddressByte(0x42)    // Destination address
-        .verifyAll(context -> {
-            int destAddr = context.second;
-            int value = context.first;
-            cpuVerifier.checkMemoryByte(destAddr, value);
-        });
-    
-    forSome8bitBinary(
-        test.run(0xED, 0xB0)  // LDIR or similar
-    );
-}
-```
+## Built-in builder operations
 
----
+`TestBuilder` supplies reusable operations for:
 
-## Troubleshooting
+- injecting bytes or 16-bit words at fixed memory addresses;
+- using an operand as the address of a byte or word;
+- writing one operand to the address represented by the other;
+- setting flags or a random register value before execution;
+- verifying memory bytes, words, and flags;
+- constructing zero-, one-, and two-operand instruction byte sequences;
+- retaining selected injectors or verifiers between generated cases.
 
-**"Last operation is not set!"**
+Byte operands used as addresses are interpreted as unsigned values (`0..255`). Word values and instruction operands are written little-endian.
 
-Provide operation in same call or set it in previous call:
-```java
-.verifyByte(0x100, context -> context.first + context.second)
-// OR
-.verifyRegister(REG_A, context -> context.first + context.second)
-.verifyFlagsOfLastOp(new FlagsCheck().zero())  // Reuses lastOperation
-```
+### Retaining configuration
 
-**Test Fails: "PC=X expected:<breakpoint> but was:<null>"**
+`run(...)` returns a cloned `TestRunner` for that instruction and clears transient configuration from the builder.
 
-Ensure CPU calls `CPUListener` after `step()`:
-```java
-public void step() {
-    executeInstruction();
-    notifyStateChanged(RunState.STATE_STOPPED_BREAK);
-}
-```
+- `keepCurrentInjectorsAfterRun()` retains injectors configured so far.
+- `clearOtherVerifiersAfterRun()` retains verifiers configured so far.
+- `clearAllVerifiers()` removes both transient and retained verifiers.
 
-**Wrong Flag Values**
+Call the retain method only after adding the configuration that should survive later `run(...)` calls.
 
-Verify `FlagsCheck` logic:
-```java
-public MyFlagsCheck zero() {
-    expectFlagOnlyWhen(FLAG_ZERO, (ctx, result) -> 
-        (result.intValue() & 0xFF) == 0);  // Mask to proper width
-    return this;
-}
-```
+## Generating operands
 
-**Problem:** Flag verification fails unexpectedly.
+Random methods execute 25 cases by default. Change that process-wide value with `Generator.setRandomTestsCount(count)`. The count must be non-negative; `Generator` is not thread-safe.
 
-**Solution:** Double-check your FlagsCheck logic. Use `.printInjectingProcess()` and debug output to verify:
+| Family | Behavior |
+| --- | --- |
+| `forAll8bitBinary` | Runs the 32,896 unique pairs where the second unsigned value is greater than or equal to the first. |
+| `forSome8bitBinary` | Runs a configurable number of random ordered byte pairs. |
+| `forAll16bitBinary` | Runs the Cartesian product from the supplied starts through `0xFFFF`. |
+| `forSome16bitBinary` | Runs random values uniformly within each supplied start-to-`0xFFFF` range. |
+| `*BinaryWhichEqual` | Supplies the same value as both operands. |
+| `*Binary* satisfying` | Restricts generated 16-bit values with predicates; random variants fail fast when a predicate has no match. |
+| `*Unary` | Supplies the generated value as the first operand and zero as the second. |
+| `forGivenOperandsAndSingleRun` | Executes exactly the supplied value or pair. |
+
+Start values for 16-bit generators must be in `0..0xFFFF`. Be careful with exhaustive 16-bit binary generation: the full Cartesian product contains 4,294,967,296 cases.
+
+## Memory and address-space behavior
+
+`CpuRunner.ensureProgramSize(length)` grows program memory to cover both the requested length and `CPU.getAddressSpaceSize()`, preserving existing cells. This lets tests follow the CPU's declared address space instead of assuming a fixed 64 KiB memory.
+
+The provided stubs are:
+
+- `ByteMemoryStub` for byte cells;
+- `ShortMemoryStub` for short cells.
+
+Both implement emuLib's `MemoryContext`. Pass the required `NumberUtils.Strategy` to their constructors.
+
+## Debugging
+
+Useful builder methods include:
+
 ```java
 test.printInjectingProcess()
-    .verifyAll(context -> {
-        System.out.println("First: " + context.first);
-        System.out.println("Second: " + context.second);
-        System.out.println("Flags: " + Integer.toBinaryString(cpuRunner.getFlags()));
-    });
+    .printOperands()
+    .printRegister(REG_A);
 ```
 
-**Tests Too Slow?**
+If `verifyFlagsOfLastOp(...)` or a memory verifier reports `Last operation is not set!`, first call an overload that accepts the expected-result function, such as `verifyByte(address, operation)` or a consumer-defined register verifier.
 
-Use `forSome*` instead of `forAll*`:
-```java
-Generator.setRandomTestsCount(50);
-forSome8bitBinary(test.run(0x90));
+If `CpuRunner.step()` reports an unexpected run state, ensure the CPU notifies its `CPUListener` during the step. The default expected state is `STATE_STOPPED_BREAK`; use `expectRunState(...)` when testing a different outcome.
+
+## Building
+
+Gradle 9 requires JDK 17 or later to run this build; CI uses JDK 21. The compiled library still targets Java 11.
+
+```bash
+./gradlew test
+./gradlew build
 ```
 
----
+Generate the C4 architecture documentation with:
 
-## Additional Resources
+```bash
+./gradlew doc
+```
 
-- **Javadoc**: Full API documentation
-- **Source Code**: [https://github.com/emustudio/emuStudio](https://github.com/emustudio/emuStudio)
-- **Bug Reports**: [GitHub Issues](https://github.com/emustudio/emuStudio/issues)
-- **Real Examples**: See Intel 8080 and Zilog Z80 CPU plugin tests
+The entry point is `docs/output/index.html`. Diagram rendering requires Graphviz (`dot`) on `PATH`. The source is in [`docs/index.adoc`](docs/index.adoc).
+
+## Project links
+
+- [CPU Test Suite source](https://github.com/emustudio/cpu-testsuite)
+- [emuStudio CPU plug-in implementations](https://github.com/emustudio/emuStudio/tree/master/plugins/cpu)
+- [Issue tracker](https://github.com/emustudio/cpu-testsuite/issues)
 
 ## License
 
-Licensed under GPL v3.0. See LICENSE file for details.
+GNU General Public License v3.0 or later. See [`LICENSE`](LICENSE).

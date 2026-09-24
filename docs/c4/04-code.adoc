@@ -68,6 +68,7 @@ abstract class "CpuRunner<TCpu extends CPU>" as CpuRunner {
   +reset()
   +step()
   +setProgram(short...)
+  +ensureProgramSize(int)
   +{abstract} getRegisters(): List<Integer>
   +{abstract} setRegister(int, int)
   +{abstract} getPC(): int
@@ -119,3 +120,5 @@ end note
   `RunnerContext`.
 * `MemoryStub` extends emuLib's `MemoryContext`, so the CPU plug-in reads and writes memory
   during the test exactly as it would at runtime.
+* `CpuRunner.ensureProgramSize` uses the CPU-reported address-space size as its minimum and
+  preserves existing cells while growing the backing program.

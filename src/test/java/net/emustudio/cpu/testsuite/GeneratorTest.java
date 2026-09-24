@@ -141,6 +141,14 @@ public class GeneratorTest {
         assertEquals(25, count.get());
     }
 
+    @Test
+    public void testForSome16bitBinaryIncludesUpperBoundWhenRequired() {
+        Generator.forSome16bitBinary(0xFFFF, 0xFFFF, (a, b) -> {
+            assertEquals(Integer.valueOf(0xFFFF), a);
+            assertEquals(Integer.valueOf(0xFFFF), b);
+        });
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testForSome16bitBinaryThrowsExceptionForInvalidFirstStart() {
         Generator.forSome16bitBinary(0xFFFF + 1, 0, (a, b) -> {});
@@ -216,6 +224,19 @@ public class GeneratorTest {
     }
 
     @Test
+    public void testForSome16bitBinaryFirstSatisfyingSupportsSparsePredicate() {
+        Generator.forSome16bitBinaryFirstSatisfying(
+            i -> i == 0xFFFF,
+            (a, b) -> assertEquals(Integer.valueOf(0xFFFF), a)
+        );
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testForSome16bitBinaryFirstSatisfyingRejectsImpossiblePredicate() {
+        Generator.forSome16bitBinaryFirstSatisfying(i -> false, (a, b) -> {});
+    }
+
+    @Test
     public void testForSome16bitBinaryBothSatisfying() {
         AtomicInteger count = new AtomicInteger(0);
 
@@ -230,6 +251,18 @@ public class GeneratorTest {
         );
 
         assertEquals(25, count.get());
+    }
+
+    @Test
+    public void testForSome16bitBinaryBothSatisfyingSupportsSparsePredicates() {
+        Generator.forSome16bitBinaryBothSatisfying(
+            i -> i == 0xFFFF,
+            i -> i == 0,
+            (a, b) -> {
+                assertEquals(Integer.valueOf(0xFFFF), a);
+                assertEquals(Integer.valueOf(0), b);
+            }
+        );
     }
 
     @Test
@@ -298,6 +331,19 @@ public class GeneratorTest {
         });
 
         assertEquals(25, count.get());
+    }
+
+    @Test
+    public void testForSome16bitUnaryDoesNotExceedUpperBound() {
+        Generator.forSome16bitUnary(0xFFFF, (a, b) -> {
+            assertEquals(Integer.valueOf(0xFFFF), a);
+            assertEquals(Integer.valueOf(0), b);
+        });
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testForSome16bitUnaryRejectsNegativeStart() {
+        Generator.forSome16bitUnary(-1, (a, b) -> {});
     }
 
     @Test
@@ -377,5 +423,10 @@ public class GeneratorTest {
 
         // Reset to default
         Generator.setRandomTestsCount(25);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetRandomTestsCountRejectsNegativeCount() {
+        Generator.setRandomTestsCount(-1);
     }
 }

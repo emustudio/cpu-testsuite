@@ -50,7 +50,7 @@ public class MemoryAddress<TCpuRunner extends CpuRunner<?>, TOperand extends Num
      */
     @Override
     public void accept(TCpuRunner cpuRunner, TOperand address) {
-        int tmp = address.intValue();
+        int tmp = address instanceof Byte ? Byte.toUnsignedInt(address.byteValue()) : address.intValue();
 
         cpuRunner.setByte(tmp, value & 0xFF);
         if (word) {

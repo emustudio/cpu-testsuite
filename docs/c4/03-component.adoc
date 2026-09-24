@@ -20,7 +20,7 @@ System_Ext(junit, "JUnit 4", "Assertions")
 Container_Boundary(lib, "CPU Test Suite Library") {
 
     Component(generator, "Generator", "Java — static utility", "Generates 8/16-bit unary & binary operand combinations (forAll* exhaustive, forSome* random) and drives the runner")
-    Component(builder, "TestBuilder", "Abstract fluent API", "Declarative test spec; registers injectors & verifiers and builds a TestRunner. Subclassed as ByteTestBuilder / IntegerTestBuilder")
+    Component(builder, "TestBuilder", "Abstract fluent API", "Declarative test spec; registers injectors & verifiers and builds a TestRunner. Specialized by consumers for Byte or Integer operands")
     Component(runner, "TestRunner", "Java — BiConsumer", "Execution engine: reset -> inject -> step -> verify for each operand pair")
     Component(context, "RunnerContext", "Immutable value object", "Snapshot of operands + CPU state (flags, PC, SP, registers) captured before the step")
 
@@ -77,8 +77,8 @@ Rel(cpuverifier, junit, "assertEquals")
 | *TestBuilder* (`TestBuilder`, abstract)
 | The fluent, declarative specification. Chained calls describe where operands come from,
   what result to expect and which flags to check. It translates the specification into
-  concrete injectors and verifiers registered on a `TestRunner`. Consumers use the
-  `ByteTestBuilder` / `IntegerTestBuilder` subclasses.
+  concrete injectors and verifiers registered on a `TestRunner`. Consumers provide a
+  concrete subclass specialized for `Byte` or `Integer` operands.
 
 | *TestRunner* (`TestRunner`, `BiConsumer<TOperand,TOperand>`)
 | The execution engine. For each operand pair it resets the CPU, restores preserved flags,
@@ -92,7 +92,8 @@ Rel(cpuverifier, junit, "assertEquals")
 
 | *CpuRunner* (`CpuRunner<TCpu>`, abstract)
 | Adapter that wraps the CPU and a memory stub and exposes a uniform control surface:
-  `reset`, `setProgram`, `setByte`, `step`, register/flag accessors. Implemented per CPU.
+  `reset`, `setProgram`, `setByte`, `step`, register/flag accessors. Program memory grows
+  to at least `CPU.getAddressSpaceSize()`. Implemented per CPU.
 
 | *CpuVerifier* (`CpuVerifier`, abstract)
 | Adapter for assertions. Provides `checkMemoryByte` / `checkMemoryTwoBytes`; consumers add
@@ -116,5 +117,6 @@ Rel(cpuverifier, junit, "assertEquals")
 | *Memory Stubs* (`memory` package)
 | In-memory `MemoryContext` implementations acting as the CPU's memory during tests.
   `MemoryStub` is the SPI; `ByteMemoryStub` and `ShortMemoryStub` differ in cell width and
-  honour a little-endian word-reading strategy.
+  use the emuLib word-reading strategy supplied to their constructors. Instruction-word
+  injectors write little-endian values.
 |===

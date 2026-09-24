@@ -7,6 +7,7 @@ import net.jcip.annotations.NotThreadSafe;
 import java.util.Random;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
+import java.util.stream.IntStream;
 
 /**
  * Test data generator for comprehensive CPU instruction testing.
@@ -62,10 +63,32 @@ public class Generator {
     /**
      * Sets the number of random test iterations to be used by 'forSome' methods.
      *
-     * @param randomTests the number of random test iterations
+     * @param randomTests the non-negative number of random test iterations
+     * @throws IllegalArgumentException if the count is negative
      */
     public static void setRandomTestsCount(int randomTests) {
+        if (randomTests < 0) {
+            throw new IllegalArgumentException("Random tests count must be >= 0");
+        }
         Generator.randomTests = randomTests;
+    }
+
+    private static void validate16BitStart(int start, String operandName) {
+        if (start < 0 || start > MAX_16BIT_VALUE) {
+            throw new IllegalArgumentException(operandName + " start must be between 0 and " + MAX_16BIT_VALUE);
+        }
+    }
+
+    private static int random16BitFrom(Random random, int start) {
+        return start + random.nextInt(MAX_16BIT_VALUE - start + 1);
+    }
+
+    private static int[] matching16BitValues(Predicate<Integer> predicate, String operandName) {
+        int[] values = IntStream.rangeClosed(0, MAX_16BIT_VALUE).filter(predicate::test).toArray();
+        if (values.length == 0) {
+            throw new IllegalArgumentException(operandName + " predicate does not match a 16-bit value");
+        }
+        return values;
     }
 
     /**
@@ -138,16 +161,12 @@ public class Generator {
      * @param firstStartFrom the starting value for the first operand (0-65535)
      * @param secondStartFrom the starting value for the second operand (0-65535)
      * @param runners the consumers to execute with each pair of integer values
-     * @throws IllegalArgumentException if start values exceed 0xFFFF
+     * @throws IllegalArgumentException if start values are outside 0..0xFFFF
      */
     @SafeVarargs
     public static void forAll16bitBinary(int firstStartFrom, int secondStartFrom, BiConsumer<Integer, Integer>... runners) {
-        if (firstStartFrom > MAX_16BIT_VALUE) {
-            throw new IllegalArgumentException("First start from must be <= " + MAX_16BIT_VALUE);
-        }
-        if (secondStartFrom > MAX_16BIT_VALUE) {
-            throw new IllegalArgumentException("Second start from must be <= " + MAX_16BIT_VALUE);
-        }
+        validate16BitStart(firstStartFrom, "First");
+        validate16BitStart(secondStartFrom, "Second");
 
         for (int i = firstStartFrom; i < 65536; i++) {
             for (int j = secondStartFrom; j < 65536; j++) {
@@ -165,28 +184,18 @@ public class Generator {
      * @param firstStartFrom the minimum value for the first operand (0-65535)
      * @param secondStartFrom the minimum value for the second operand (0-65535)
      * @param runners the consumers to execute with each pair of integer values
-     * @throws IllegalArgumentException if start values exceed 0xFFFF
+     * @throws IllegalArgumentException if start values are outside 0..0xFFFF
      */
     @SafeVarargs
     public static void forSome16bitBinary(int firstStartFrom, int secondStartFrom, BiConsumer<Integer, Integer>... runners) {
-        if (firstStartFrom > MAX_16BIT_VALUE) {
-            throw new IllegalArgumentException("First start from must be <= " + MAX_16BIT_VALUE);
-        }
-        if (secondStartFrom > MAX_16BIT_VALUE) {
-            throw new IllegalArgumentException("Second start from must be <= " + MAX_16BIT_VALUE);
-        }
+        validate16BitStart(firstStartFrom, "First");
+        validate16BitStart(secondStartFrom, "Second");
 
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
-                int first = random.nextInt(MAX_16BIT_VALUE);
-                if (first < firstStartFrom) {
-                    first = firstStartFrom;
-                }
-                int second = random.nextInt(MAX_16BIT_VALUE);
-                if (second < secondStartFrom) {
-                    second = secondStartFrom;
-                }
+                int first = random16BitFrom(random, firstStartFrom);
+                int second = random16BitFrom(random, secondStartFrom);
                 runner.accept(first, second);
             }
         }
@@ -242,6 +251,7 @@ public class Generator {
      *
      * @param predicate the condition that the first operand must satisfy
      * @param runners the consumers to execute with each pair of integer values
+     * @throws IllegalArgumentException if the predicate matches no 16-bit value
      */
     @SafeVarargs
     public static void forAll16bitBinaryFirstSatisfying(Predicate<Integer> predicate,
@@ -267,14 +277,15 @@ public class Generator {
     @SafeVarargs
     public static void forSome16bitBinaryFirstSatisfying(Predicate<Integer> predicate,
                                                          BiConsumer<Integer, Integer>... runners) {
+        if (randomTests == 0) {
+            return;
+        }
+        int[] matchingValues = matching16BitValues(predicate, "First");
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
-                int first = random.nextInt(MAX_16BIT_VALUE);
-                while (!predicate.test(first)) {
-                    first = random.nextInt(MAX_16BIT_VALUE);
-                }
-                runner.accept(first, random.nextInt(MAX_16BIT_VALUE));
+                int first = matchingValues[random.nextInt(matchingValues.length)];
+                runner.accept(first, random.nextInt(MAX_16BIT_VALUE + 1));
             }
         }
     }
@@ -286,21 +297,21 @@ public class Generator {
      * @param firstP the condition that the first operand must satisfy
      * @param secondP the condition that the second operand must satisfy
      * @param runners the consumers to execute with each pair of integer values
+     * @throws IllegalArgumentException if either predicate matches no 16-bit value
      */
     @SafeVarargs
     public static void forSome16bitBinaryBothSatisfying(Predicate<Integer> firstP, Predicate<Integer> secondP,
                                                         BiConsumer<Integer, Integer>... runners) {
+        if (randomTests == 0) {
+            return;
+        }
+        int[] firstValues = matching16BitValues(firstP, "First");
+        int[] secondValues = matching16BitValues(secondP, "Second");
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
-                int first = random.nextInt(MAX_16BIT_VALUE);
-                while (!firstP.test(first)) {
-                    first = random.nextInt(MAX_16BIT_VALUE);
-                }
-                int second = random.nextInt(MAX_16BIT_VALUE);
-                while (!secondP.test(second)) {
-                    second = random.nextInt(MAX_16BIT_VALUE);
-                }
+                int first = firstValues[random.nextInt(firstValues.length)];
+                int second = secondValues[random.nextInt(secondValues.length)];
                 runner.accept(first, second);
             }
         }
@@ -354,7 +365,7 @@ public class Generator {
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
-                int k = random.nextInt(MAX_16BIT_VALUE);
+                int k = random.nextInt(MAX_16BIT_VALUE + 1);
                 runner.accept(k, k);
             }
         }
@@ -408,16 +419,15 @@ public class Generator {
      *
      * @param firstStartFrom the minimum value for the first operand (0-65535)
      * @param runners the consumers to execute with each integer value and 0
+     * @throws IllegalArgumentException if the start value is outside 0..0xFFFF
      */
     @SafeVarargs
     public static void forSome16bitUnary(int firstStartFrom, BiConsumer<Integer, Integer>... runners) {
+        validate16BitStart(firstStartFrom, "First");
         Random random = new Random();
         for (int i = 0; i < randomTests; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {
-                int first = random.nextInt(MAX_16BIT_VALUE + 1);
-                if (first < firstStartFrom) {
-                    first += firstStartFrom;
-                }
+                int first = random16BitFrom(random, firstStartFrom);
                 runner.accept(first, 0);
             }
         }
@@ -429,13 +439,11 @@ public class Generator {
      *
      * @param firstStartFrom the starting value for the first operand (0-65535)
      * @param runners the consumers to execute with each integer value and 0
-     * @throws IllegalArgumentException if start value exceeds 0xFFFF
+     * @throws IllegalArgumentException if the start value is outside 0..0xFFFF
      */
     @SafeVarargs
     public static void forAll16bitUnary(int firstStartFrom, BiConsumer<Integer, Integer>... runners) {
-        if (firstStartFrom > MAX_16BIT_VALUE) {
-            throw new IllegalArgumentException("First start from must be <=" + MAX_16BIT_VALUE);
-        }
+        validate16BitStart(firstStartFrom, "First");
 
         for (int i = firstStartFrom; i <= MAX_16BIT_VALUE; i++) {
             for (BiConsumer<Integer, Integer> runner : runners) {

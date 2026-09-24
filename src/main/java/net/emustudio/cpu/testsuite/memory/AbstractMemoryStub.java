@@ -11,6 +11,7 @@ abstract class AbstractMemoryStub<T extends Number> implements MemoryStub<T> {
     private final int wordReadingStrategy;
     private final T zero;
 
+    /** Backing cells exposed to concrete memory stubs. */
     protected T[] memory;
 
     protected AbstractMemoryStub(int wordReadingStrategy, T[] memory, T zero) {
@@ -20,6 +21,11 @@ abstract class AbstractMemoryStub<T extends Number> implements MemoryStub<T> {
         clear();
     }
 
+    /**
+     * Replaces the backing cells without copying them.
+     *
+     * @param memory new backing cells
+     */
     protected final void setMemoryCells(T[] memory) {
         this.memory = Objects.requireNonNull(memory);
     }

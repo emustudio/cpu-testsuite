@@ -5,9 +5,15 @@ package net.emustudio.cpu.testsuite.memory;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.jcip.annotations.NotThreadSafe;
 
+/** Short-cell memory context for CPU tests. */
 @SuppressWarnings("unused")
 @NotThreadSafe
 public class ShortMemoryStub extends AbstractMemoryStub<Short> {
+    /**
+     * Creates zero-filled short memory with the supplied word-reading strategy.
+     *
+     * @param wordReadingStrategy emuLib word-reading strategy
+     */
     public ShortMemoryStub(int wordReadingStrategy) {
         super(wordReadingStrategy, new Short[1000], (short) 0);
     }

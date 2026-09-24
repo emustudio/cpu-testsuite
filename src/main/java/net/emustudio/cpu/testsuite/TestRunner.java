@@ -187,10 +187,10 @@ public class TestRunner<TCpuRunner extends CpuRunner<?>, TOperand extends Number
     private void printInjectionIfEnabled(String formatString, Object... arguments) {
         if (printInjectingProcess) {
             String argumentFormat = "";
-            if (arguments.length > 1) {
-                argumentFormat = "=%x";
-            } else if (arguments.length > 2) {
+            if (arguments.length > 2) {
                 argumentFormat = "=(%x,%x)";
+            } else if (arguments.length > 1) {
+                argumentFormat = "=%x";
             }
             if (arguments.length > 0) {
                 argumentFormat += " (to %s)";
