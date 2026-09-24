@@ -12,6 +12,9 @@ import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -343,10 +346,20 @@ public class TestRunnerTest {
 
     @Test
     public void testPrintInjectingProcess() {
-        // Just verify it doesn't throw an exception
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        PrintStream originalOut = System.out;
         testRunner.printInjectingProcess();
-        testRunner.injectFirst((runner, operand) -> {});
-        testRunner.accept(1, 2);
+        testRunner.injectTwoOperands((runner, first, second) -> {});
+
+        try {
+            System.setOut(new PrintStream(output));
+            testRunner.accept(11, 22);
+        } finally {
+            System.setOut(originalOut);
+        }
+
+        String message = new String(output.toByteArray(), StandardCharsets.UTF_8);
+        assertTrue(message.startsWith("Injecting (first,second)=(b,16) (to "));
     }
 
     @Test

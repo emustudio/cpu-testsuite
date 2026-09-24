@@ -26,6 +26,12 @@ public class TestBuilderTest {
         }
     }
 
+    private static class ConcreteByteTestBuilder extends TestBuilder<Byte, ConcreteByteTestBuilder, SimpleCpuRunner, SimpleCpuVerifier> {
+        protected ConcreteByteTestBuilder(SimpleCpuRunner cpuRunner, SimpleCpuVerifier cpuVerifier) {
+            super(cpuRunner, cpuVerifier);
+        }
+    }
+
     @Before
     public void setUp() {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
@@ -330,6 +336,18 @@ public class TestBuilderTest {
     public void testFirstIsAddressAndSecondIsMemoryByteInjectsCorrectly() {
         ConcreteTestBuilder result = builder.firstIsAddressAndSecondIsMemoryByte();
         assertSame(builder, result);
+    }
+
+    @Test
+    public void testByteOperandUsedAsAddressIsUnsigned() {
+        SimpleCpuRunner runner = mock(SimpleCpuRunner.class);
+        when(runner.getRegisters()).thenReturn(java.util.Collections.emptyList());
+        ConcreteByteTestBuilder byteBuilder = new ConcreteByteTestBuilder(runner, cpuVerifier);
+        byteBuilder.firstIsAddressAndSecondIsMemoryByte();
+
+        byteBuilder.runner.accept((byte) 0xFF, (byte) 0x42);
+
+        verify(runner).setByte(0xFF, 0x42);
     }
 
     @Test

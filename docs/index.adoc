@@ -48,6 +48,7 @@ The suite is applicable when the CPU plug-in satisfies these constraints:
 * Memory is a collection of linearly ordered cells of type `Short` or `Byte`.
 * The CPU uses little-endian byte order.
 * The CPU exposes a program counter and a stack pointer.
+* The CPU reports its address-space size through `CPU.getAddressSpaceSize()`.
 * Instruction operands are `Byte` (8-bit) or `Integer` (16-bit).
 
 include::c4/01-system-context.adoc[leveloffset=+1]
@@ -70,4 +71,5 @@ Asciidoctor Gradle plugin. Generate the HTML with:
 
 The result is written to `docs/output/`, with `docs/output/index.html` as the entry point.
 The `doc` task requires https://graphviz.org[Graphviz] (`dot`) to be available on the
-`PATH` for diagram rendering.
+`PATH` for diagram rendering. Gradle 9 requires JDK 17 or later to run the build; the
+library itself targets Java 11.

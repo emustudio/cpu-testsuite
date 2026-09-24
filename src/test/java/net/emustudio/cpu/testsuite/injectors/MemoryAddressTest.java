@@ -46,6 +46,14 @@ public class MemoryAddressTest {
     }
 
     @Test
+    public void testAcceptTreatsByteAddressAsUnsigned() {
+        MemoryAddress<SimpleCpuRunner, Byte> injector = new MemoryAddress<>((byte) 0x55);
+        injector.accept(cpuRunner, (byte) 0xFF);
+
+        assertEquals((byte) 0x55, memory.read(0xFF).byteValue());
+    }
+
+    @Test
     public void testAcceptWordValue() {
         MemoryAddress<SimpleCpuRunner, Integer> injector = new MemoryAddress<>(0x1234);
         injector.accept(cpuRunner, 0x100);

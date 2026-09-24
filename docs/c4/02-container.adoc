@@ -20,7 +20,7 @@ System_Ext(junit, "JUnit 4", "Test runner & assertions")
 System_Ext(emulib, "emuLib", "CPU, MemoryContext, NumberUtils")
 
 System_Boundary(jvm, "Test Execution (JVM)") {
-    Container(tests, "CPU Plug-in Test Suite (consumer code)", "Java + JUnit", "Instruction test classes plus CPU-specific adapters: CpuRunnerImpl, CpuVerifierImpl, FlagsBuilderImpl and a ByteTestBuilder / IntegerTestBuilder subclass")
+    Container(tests, "CPU Plug-in Test Suite (consumer code)", "Java + JUnit", "Instruction test classes plus CPU-specific CpuRunner, CpuVerifier, FlagsCheck and TestBuilder adapters")
     Container(lib, "CPU Test Suite Library", "Java 11 library — cpu-testsuite.jar", "Fluent test builders, operand generators, state injectors, result verifiers and in-memory memory stubs")
     Container(plugin, "CPU Plug-in", "Java — emuStudio plug-in", "The CPU and its memory implementation under test")
 }
@@ -46,7 +46,7 @@ Rel(plugin, emulib, "Implements", "plug-in API")
 | Lives in the CPU plug-in's `src/test`. Contains the instruction test classes and the thin
   CPU-specific *adapters* that bind the generic framework to one CPU: a `CpuRunner`
   subclass, a `CpuVerifier` subclass, an optional `FlagsCheck` subclass, and a concrete
-  `TestBuilder` (extending `ByteTestBuilder` / `IntegerTestBuilder`).
+  `TestBuilder` specialized for `Byte` or `Integer` operands.
 
 | *CPU Test Suite Library*
 | Java 11 library
@@ -68,5 +68,5 @@ generic. The consumer closes the gap by extending four abstract seams:
 * `CpuRunner` — how to reset the CPU, set registers/flags and single-step.
 * `CpuVerifier` — how to assert that flags are (not) set.
 * `FlagsCheck` — how each flag is computed from operands and result (optional).
-* `TestBuilder` — a CPU-flavoured fluent entry point (typically trivial subclasses of
-  `ByteTestBuilder` / `IntegerTestBuilder`).
+* `TestBuilder` — a CPU-flavoured fluent entry point specialized for `Byte` or `Integer`;
+  names such as `ByteTestBuilder` are consumer conventions, not library classes.

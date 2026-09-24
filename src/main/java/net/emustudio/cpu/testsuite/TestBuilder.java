@@ -370,7 +370,7 @@ public abstract class TestBuilder<TOperand extends Number,
      */
     public TTestBuilder firstIsAddressAndSecondIsMemoryWord() {
         runner.injectTwoOperands((runner, first, second) ->
-            writeWordToAddress(runner, first.intValue(), second.intValue()));
+            writeWordToAddress(runner, toAddress(first), second.intValue()));
         return (TTestBuilder) this;
     }
 
@@ -381,7 +381,7 @@ public abstract class TestBuilder<TOperand extends Number,
      */
     public TTestBuilder secondIsAddressAndFirstIsMemoryWord() {
         runner.injectTwoOperands((runner, first, second) ->
-            writeWordToAddress(runner, second.intValue(), first.intValue()));
+            writeWordToAddress(runner, toAddress(second), first.intValue()));
         return (TTestBuilder) this;
     }
 
@@ -392,7 +392,7 @@ public abstract class TestBuilder<TOperand extends Number,
      */
     public TTestBuilder firstIsAddressAndSecondIsMemoryByte() {
         runner.injectTwoOperands((runner, first, second) ->
-            writeByteToAddress(runner, first.intValue(), second.intValue()));
+            writeByteToAddress(runner, toAddress(first), second.intValue()));
         return (TTestBuilder) this;
     }
 
@@ -403,8 +403,12 @@ public abstract class TestBuilder<TOperand extends Number,
      */
     public TTestBuilder secondIsAddressAndFirstIsMemoryByte() {
         runner.injectTwoOperands((runner, first, second) ->
-            writeByteToAddress(runner, second.intValue(), first.intValue()));
+            writeByteToAddress(runner, toAddress(second), first.intValue()));
         return (TTestBuilder) this;
+    }
+
+    private int toAddress(TOperand operand) {
+        return operand instanceof Byte ? Byte.toUnsignedInt(operand.byteValue()) : operand.intValue();
     }
 
     private void writeWordToAddress(TCpuRunner runner, int address, int value) {
