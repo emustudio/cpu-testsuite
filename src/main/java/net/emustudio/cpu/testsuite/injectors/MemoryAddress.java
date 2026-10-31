@@ -52,9 +52,10 @@ public class MemoryAddress<TCpuRunner extends CpuRunner<?>, TOperand extends Num
     public void accept(TCpuRunner cpuRunner, TOperand address) {
         int tmp = address instanceof Byte ? Byte.toUnsignedInt(address.byteValue()) : address.intValue();
 
-        cpuRunner.setByte(tmp, value & 0xFF);
         if (word) {
-            cpuRunner.setByte(tmp + 1, (value >>> 8) & 0xFF);
+            cpuRunner.setWord(tmp, value);
+        } else {
+            cpuRunner.setByte(tmp, value);
         }
     }
 

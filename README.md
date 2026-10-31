@@ -13,7 +13,7 @@ The library provides the reusable execution engine. Each CPU plug-in supplies sm
 - Java 11 or later for consumers.
 - An emuStudio CPU implementing the emuLib `CPU` contract.
 - A linearly addressed `Byte` or `Short` memory context.
-- Little-endian instruction operands. Memory stubs can still use either emuLib word-reading strategy.
+- Word injection, instruction operands, and verification share the memory stub's emuLib word-reading strategy.
 - JUnit 4 in the consumer test runtime.
 
 The artifact suffix is the compatible emuLib major version. For emuLib 12:
@@ -100,6 +100,13 @@ Generator.forSome8bitBinary(test.run(0x80));
 ```
 
 The expectation lambda is test logic: an incorrect expression produces an incorrect expected result.
+Each verifier takes its expected-result function explicitly. Reuse a local function when several checks describe the same result:
+
+```java
+Function<RunnerContext<Byte>, Integer> expected =
+        context -> Byte.toUnsignedInt(context.first) + Byte.toUnsignedInt(context.second);
+test.verifyByte(0x100, expected).verifyFlags(flagsCheck, expected);
+```
 
 ## Built-in builder operations
 
@@ -113,17 +120,18 @@ The expectation lambda is test logic: an incorrect expression produces an incorr
 - constructing zero-, one-, and two-operand instruction byte sequences;
 - retaining selected injectors or verifiers between generated cases.
 
-Byte operands used as addresses are interpreted as unsigned values (`0..255`). Word values and instruction operands are written little-endian.
+Byte operands used as addresses are interpreted as unsigned values (`0..255`). Word values and Integer instruction operands use the memory stub's configured byte order and optional per-byte bit reversal. Byte operands and opcode bytes remain unchanged.
 
 ### Retaining configuration
 
 `run(...)` returns a cloned `TestRunner` for that instruction and clears transient configuration from the builder.
 
 - `keepCurrentInjectorsAfterRun()` retains injectors configured so far.
-- `clearOtherVerifiersAfterRun()` retains verifiers configured so far.
+- `keepCurrentVerifiersAfterRun()` retains verifiers configured so far.
 - `clearAllVerifiers()` removes both transient and retained verifiers.
 
 Call the retain method only after adding the configuration that should survive later `run(...)` calls.
+Calling it again replaces the retained snapshot with the current configuration; it does not duplicate earlier callbacks.
 
 ## Generating operands
 
@@ -163,7 +171,7 @@ test.printInjectingProcess()
     .printRegister(REG_A);
 ```
 
-If `verifyFlagsOfLastOp(...)` or a memory verifier reports `Last operation is not set!`, first call an overload that accepts the expected-result function, such as `verifyByte(address, operation)` or a consumer-defined register verifier.
+Flag rules added with `FlagsCheck.or(mask)` apply to every generated case. Conditional rules are recomputed for each case, so a flag that changes between set and clear does not retain its previous expectation.
 
 If `CpuRunner.step()` reports an unexpected run state, ensure the CPU notifies its `CPUListener` during the step. The default expected state is `STATE_STOPPED_BREAK`; use `expectRunState(...)` when testing a different outcome.
 

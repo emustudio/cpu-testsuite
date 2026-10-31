@@ -345,6 +345,29 @@ public class TestRunnerTest {
     }
 
     @Test
+    public void testRepeatedRetentionPreservesEachCallbackOnceAndInOrder() {
+        List<String> calls = new ArrayList<>();
+        testRunner.injectNoOperand(runner -> calls.add("inject A"));
+        testRunner.verifyAfterTest(context -> calls.add("verify A"));
+        testRunner.keepCurrentInjectorsAfterClear();
+        testRunner.keepCurrentVerifiersAfterClear();
+        testRunner.clearInjectors();
+        testRunner.clearVerifiers();
+
+        testRunner.injectNoOperand(runner -> calls.add("inject B"));
+        testRunner.verifyAfterTest(context -> calls.add("verify B"));
+        testRunner.keepCurrentInjectorsAfterClear();
+        testRunner.keepCurrentVerifiersAfterClear();
+        testRunner.keepCurrentInjectorsAfterClear();
+        testRunner.keepCurrentVerifiersAfterClear();
+        testRunner.clearInjectors();
+        testRunner.clearVerifiers();
+        testRunner.accept(0, 0);
+
+        assertEquals(Arrays.asList("inject A", "inject B", "verify A", "verify B"), calls);
+    }
+
+    @Test
     public void testPrintInjectingProcess() {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         PrintStream originalOut = System.out;

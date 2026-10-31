@@ -37,8 +37,7 @@ public class NoOperInstr<TCpuRunner extends CpuRunner<?>> implements Consumer<TC
      */
     @Override
     public void accept(TCpuRunner cpuRunner) {
-        cpuRunner.setProgram(strategy.generate());
-        strategy.clearOperands();
+        cpuRunner.setProgram(strategy.generate(cpuRunner.getWordReadingStrategy()));
     }
 
     /**

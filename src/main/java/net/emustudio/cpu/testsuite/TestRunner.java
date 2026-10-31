@@ -57,6 +57,7 @@ public class TestRunner<TCpuRunner extends CpuRunner<?>, TOperand extends Number
      * Injectors added after calling this method will not be preserved, again.
      */
     public void keepCurrentInjectorsAfterClear() {
+        injectorsToKeep.clear();
         injectorsToKeep.addAll(injectors);
     }
 
@@ -69,6 +70,7 @@ public class TestRunner<TCpuRunner extends CpuRunner<?>, TOperand extends Number
      * Verifiers added after calling this method will not be preserved, again.
      */
     public void keepCurrentVerifiersAfterClear() {
+        verifiersToKeep.clear();
         verifiersToKeep.addAll(verifiers);
     }
 

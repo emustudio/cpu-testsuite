@@ -3,8 +3,7 @@
 package net.emustudio.cpu.testsuite;
 
 import net.emustudio.cpu.testsuite.verifiers.FlagsVerifier;
-import net.emustudio.cpu.testsuite.verifiers.MemoryByteVerifier;
-import net.emustudio.cpu.testsuite.verifiers.MemoryWordVerifier;
+import net.emustudio.cpu.testsuite.verifiers.MemoryVerifier;
 import net.emustudio.cpu.testsuite.injectors.MemoryAddress;
 import net.emustudio.cpu.testsuite.injectors.MemoryByte;
 import net.emustudio.cpu.testsuite.injectors.MemoryWord;
@@ -34,20 +33,13 @@ import java.util.function.Function;
  * <p>
  * <b>Usage example:</b>
  * <pre>{@code
- * // Create a test builder for an 8-bit ADD instruction
- * testBuilder
- *     .firstIsMemoryByteAt(0x1000)     // First operand from memory[0x1000]
- *     .secondIsMemoryByteAt(0x1001)     // Second operand from memory[0x1001]
- *     .verifyFlags(flags -> flags       // Verify CPU flags
- *         .expectCarry()
- *         .expectZero())
- *     .verifyByte(0x2000)               // Verify result at memory[0x2000]
- *     .runWithBothOperands(0x80, 0x05); // Execute instruction with opcodes
- * 
- * // Run the test with all 8-bit value combinations
- * Generator.forAll8bitBinary((first, second) -> {
- *     testBuilder.accept(first, second);
- * });
+ * Function<RunnerContext<Byte>, Integer> expected =
+ *     context -> Byte.toUnsignedInt(context.first) + Byte.toUnsignedInt(context.second);
+ * Generator.forSome8bitBinary(testBuilder
+ *     .firstIsMemoryByteAt(0x1000)
+ *     .secondIsMemoryByteAt(0x1001)
+ *     .verifyByte(0x1000, expected)
+ *     .run(0x80)); // CPU-specific opcode
  * }</pre>
  *
  * @param <TOperand> the type of operands (Byte or Integer)
@@ -72,12 +64,6 @@ public abstract class TestBuilder<TOperand extends Number,
      * The test runner responsible for executing tests with injectors and verifiers.
      */
     protected final TestRunner<TCpuRunner, TOperand> runner;
-
-    /**
-     * The last operation set for verification purposes.
-     * Used by verification methods to check memory or flags against operation results.
-     */
-    protected Function<RunnerContext<TOperand>, Integer> lastOperation;
 
     /**
      * Creates a new test builder with the specified CPU runner and verifier.
@@ -168,23 +154,7 @@ public abstract class TestBuilder<TOperand extends Number,
      * @return this test builder instance for method chaining
      */
     public TTestBuilder verifyFlags(FlagsCheck<TOperand, ?> flagsCheck, Function<RunnerContext<TOperand>, Integer> operator) {
-        lastOperation = operator;
-        return verifyFlagsOfLastOp(flagsCheck);
-    }
-
-    /**
-     * Verifies CPU flags after executing the last operation that was set.
-     *
-     * @param flagsCheck the flags checker to verify expected flag states
-     * @return this test builder instance for method chaining
-     * @throws IllegalStateException if no last operation has been set
-     */
-    public TTestBuilder verifyFlagsOfLastOp(FlagsCheck<TOperand, ?> flagsCheck) {
-        if (lastOperation == null) {
-            throw new IllegalStateException("Last operation is not set!");
-        }
-        Function<RunnerContext<TOperand>, Integer> operation = lastOperation;
-        runner.verifyAfterTest(new FlagsVerifier<>(cpuVerifier, operation, flagsCheck));
+        runner.verifyAfterTest(new FlagsVerifier<>(cpuVerifier, operator, flagsCheck));
         return (TTestBuilder) this;
     }
 
@@ -196,8 +166,7 @@ public abstract class TestBuilder<TOperand extends Number,
      * @return this test builder instance for method chaining
      */
     public TTestBuilder verifyByte(int address, Function<RunnerContext<TOperand>, Integer> operator) {
-        lastOperation = operator;
-        return verifyByte(address);
+        return verifyByte(context -> address, operator);
     }
 
     /**
@@ -209,19 +178,8 @@ public abstract class TestBuilder<TOperand extends Number,
      */
     public TTestBuilder verifyWord(Function<RunnerContext<TOperand>, Integer> addressOperator,
                                    Function<RunnerContext<TOperand>, Integer> operator) {
-        lastOperation = operator;
-        runner.verifyAfterTest(new MemoryWordVerifier<TOperand>(cpuVerifier, operator, addressOperator));
+        runner.verifyAfterTest(new MemoryVerifier<>(cpuVerifier::checkMemoryTwoBytes, operator, addressOperator));
         return (TTestBuilder) this;
-    }
-
-    /**
-     * Verifies that a byte at the specified memory address matches the result of the last operation.
-     *
-     * @param address the memory address to verify
-     * @return this test builder instance for method chaining
-     */
-    public TTestBuilder verifyByte(int address) {
-        return verifyByte(context -> address);
     }
 
     /**
@@ -233,22 +191,7 @@ public abstract class TestBuilder<TOperand extends Number,
      */
     public TTestBuilder verifyByte(Function<RunnerContext<TOperand>, Integer> addressOperator,
                                    Function<RunnerContext<TOperand>, Integer> operator) {
-        lastOperation = operator;
-        return verifyByte(addressOperator);
-    }
-
-    /**
-     * Verifies that a byte at the memory address computed by addressOperator matches the result of the last operation.
-     *
-     * @param addressOperator the function to compute the memory address
-     * @return this test builder instance for method chaining
-     * @throws IllegalStateException if no last operation has been set
-     */
-    public TTestBuilder verifyByte(Function<RunnerContext<TOperand>, Integer> addressOperator) {
-        if (lastOperation == null) {
-            throw new IllegalStateException("Last operation is not set!");
-        }
-        runner.verifyAfterTest(new MemoryByteVerifier<>(cpuVerifier, lastOperation, addressOperator));
+        runner.verifyAfterTest(new MemoryVerifier<>(cpuVerifier::checkMemoryByte, operator, addressOperator));
         return (TTestBuilder) this;
     }
 
@@ -269,7 +212,7 @@ public abstract class TestBuilder<TOperand extends Number,
      *
      * @return this test builder instance for method chaining
      */
-    public TTestBuilder clearOtherVerifiersAfterRun() {
+    public TTestBuilder keepCurrentVerifiersAfterRun() {
         runner.keepCurrentVerifiersAfterClear();
         return (TTestBuilder) this;
     }
@@ -413,8 +356,7 @@ public abstract class TestBuilder<TOperand extends Number,
 
     private void writeWordToAddress(TCpuRunner runner, int address, int value) {
         runner.ensureProgramSize(address + 4);
-        runner.setByte(address, value & 0xFF);
-        runner.setByte(address + 1, (value >>> 8) & 0xFF);
+        runner.setWord(address, value);
     }
 
     private void writeByteToAddress(TCpuRunner runner, int address, int value) {

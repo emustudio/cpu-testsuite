@@ -60,7 +60,6 @@ public class FlagsVerifier<TOperand extends Number> implements Consumer<RunnerCo
 
     @Override
     public void accept(RunnerContext<TOperand> context) {
-        flagsCheck.reset();
         flagsCheck.eval(context, operation.apply(context));
 
         verifier.checkFlags(flagsCheck.getExpectedFlags());

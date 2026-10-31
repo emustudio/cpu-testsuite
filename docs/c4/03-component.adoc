@@ -29,7 +29,7 @@ Container_Boundary(lib, "CPU Test Suite Library") {
     Component(flagscheck, "FlagsCheck", "Abstract builder", "Declarative expected-flags computation from operands & result")
 
     Component(injectors, "Injectors", "Java package", "Prepare CPU state before the step: NoOperInstr, OneOperInstr, TwoOperInstr, MemoryByte / MemoryWord / MemoryAddress, MemoryExpand, DefaultProgramGenerator (TwoOperInjector SPI)")
-    Component(verifiers, "Verifiers", "Java package", "Check state after the step: FlagsVerifier, MemoryByteVerifier, MemoryWordVerifier")
+    Component(verifiers, "Verifiers", "Java package", "Check state after the step: FlagsVerifier, MemoryVerifier")
     ComponentDb(memory, "Memory Stubs", "In-memory MemoryContext", "MemoryStub SPI + ByteMemoryStub / ShortMemoryStub used as the CPU's memory during tests")
 }
 
@@ -111,12 +111,12 @@ Rel(cpuverifier, junit, "assertEquals")
 
 | *Verifiers* (`verifiers` package)
 | Building blocks that check state after the step: `FlagsVerifier` (expected flags from a
-  `FlagsCheck` and an operation), `MemoryByteVerifier` and `MemoryWordVerifier` (expected
-  value at a computed address).
+  `FlagsCheck` and an explicit operation), and `MemoryVerifier` (expected value at a computed
+  address, using the byte or word assertion supplied by `CpuVerifier`).
 
 | *Memory Stubs* (`memory` package)
 | In-memory `MemoryContext` implementations acting as the CPU's memory during tests.
   `MemoryStub` is the SPI; `ByteMemoryStub` and `ShortMemoryStub` differ in cell width and
-  use the emuLib word-reading strategy supplied to their constructors. Instruction-word
-  injectors write little-endian values.
+  use the emuLib word-reading strategy supplied to their constructors. All word injectors
+  use that same layout.
 |===

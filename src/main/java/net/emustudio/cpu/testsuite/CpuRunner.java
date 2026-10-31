@@ -3,6 +3,7 @@
 package net.emustudio.cpu.testsuite;
 
 import net.emustudio.cpu.testsuite.internal.RunStateListenerStub;
+import net.emustudio.cpu.testsuite.internal.WordLayout;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
 import net.emustudio.emulib.plugins.cpu.CPU;
 import net.jcip.annotations.NotThreadSafe;
@@ -141,6 +142,27 @@ public abstract class CpuRunner<TCpu extends CPU> {
         } else if (memoryStub.getCellTypeClass() == Short.class) {
             ((MemoryStub<Short>) memoryStub).write(address, (short) (value & 0xFF));
         }
+    }
+
+    /**
+     * Writes the low 16 bits using the memory stub's word layout.
+     *
+     * @param address address of the first byte
+     * @param value word value
+     */
+    public void setWord(int address, int value) {
+        short[] bytes = WordLayout.encode(value, getWordReadingStrategy());
+        setByte(address, bytes[0]);
+        setByte(address + 1, bytes[1]);
+    }
+
+    /**
+     * Returns the memory strategy used for word injection and verification.
+     *
+     * @return emuLib word-reading strategy
+     */
+    public int getWordReadingStrategy() {
+        return memoryStub.getWordReadingStrategy();
     }
 
     private void resetProgram() {

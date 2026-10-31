@@ -66,12 +66,8 @@ public class OneOperInstr<TCpuRunner extends CpuRunner<?>, TOperand extends Numb
 
     @Override
     public void accept(TCpuRunner cpuRunner, TOperand operand) {
-        strategy.setOperands(operand);
-
-        cpuRunner.setProgram(strategy.generate());
-        cpuRunner.ensureProgramSize(operand.intValue() & 0xFFFF + 2);
-
-        strategy.clearOperands();
+        cpuRunner.setProgram(strategy.generate(cpuRunner.getWordReadingStrategy(), operand));
+        cpuRunner.ensureProgramSize(DefaultProgramGenerator.requiredMemorySize(operand));
     }
 
     @Override
