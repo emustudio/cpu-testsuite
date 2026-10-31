@@ -10,412 +10,189 @@ import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
-@SuppressWarnings("unchecked")
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 public class TestBuilderTest {
+    private ByteMemoryStub memory;
     private SimpleCpuRunner cpuRunner;
     private SimpleCpuVerifier cpuVerifier;
-    private ConcreteTestBuilder builder;
+    private Builder builder;
 
-    // Concrete TestBuilder implementation for testing
-    private static class ConcreteTestBuilder extends TestBuilder<Integer, ConcreteTestBuilder, SimpleCpuRunner, SimpleCpuVerifier> {
-        protected ConcreteTestBuilder(SimpleCpuRunner cpuRunner, SimpleCpuVerifier cpuVerifier) {
+    private static class Builder extends TestBuilder<Integer, Builder, SimpleCpuRunner, SimpleCpuVerifier> {
+        private Builder(SimpleCpuRunner cpuRunner, SimpleCpuVerifier cpuVerifier) {
             super(cpuRunner, cpuVerifier);
         }
     }
 
-    private static class ConcreteByteTestBuilder extends TestBuilder<Byte, ConcreteByteTestBuilder, SimpleCpuRunner, SimpleCpuVerifier> {
-        protected ConcreteByteTestBuilder(SimpleCpuRunner cpuRunner, SimpleCpuVerifier cpuVerifier) {
+    private static class ByteBuilder extends TestBuilder<Byte, ByteBuilder, SimpleCpuRunner, SimpleCpuVerifier> {
+        private ByteBuilder(SimpleCpuRunner cpuRunner, SimpleCpuVerifier cpuVerifier) {
             super(cpuRunner, cpuVerifier);
         }
     }
 
     @Before
     public void setUp() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
-        CPU mockCpu = mock(CPU.class);
-        when(mockCpu.getAddressSpaceSize()).thenReturn(65536);
-        cpuRunner = new SimpleCpuRunner(mockCpu, memory);
+        memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        CPU cpu = mock(CPU.class);
+        when(cpu.getAddressSpaceSize()).thenReturn(256);
+        cpuRunner = new SimpleCpuRunner(cpu, memory) {
+            @Override
+            public void step() {
+                // Exercise builder mechanics without executing a CPU instruction.
+            }
+        };
         cpuVerifier = new SimpleCpuVerifier(memory);
-        builder = new ConcreteTestBuilder(cpuRunner, cpuVerifier);
-    }
-
-    @Test
-    public void testConstructorStoresReferences() {
-        assertNotNull(builder.cpuRunner);
-        assertNotNull(builder.cpuVerifier);
-        assertNotNull(builder.runner);
-        assertSame(cpuRunner, builder.cpuRunner);
-        assertSame(cpuVerifier, builder.cpuVerifier);
+        builder = new Builder(cpuRunner, cpuVerifier);
     }
 
     @Test(expected = NullPointerException.class)
-    public void testConstructorWithNullCpuRunner() {
-        new ConcreteTestBuilder(null, cpuVerifier);
+    public void constructorRejectsNullRunner() {
+        new Builder(null, cpuVerifier);
     }
 
     @Test(expected = NullPointerException.class)
-    public void testConstructorWithNullCpuVerifier() {
-        new ConcreteTestBuilder(cpuRunner, null);
+    public void constructorRejectsNullVerifier() {
+        new Builder(cpuRunner, null);
     }
 
     @Test
-    public void testClearAllVerifiers() {
-        ConcreteTestBuilder result = builder.clearAllVerifiers();
-        assertSame(builder, result); // Should return this for chaining
-    }
-
-    @Test
-    public void testVerifyAll() {
-        ConcreteTestBuilder result = builder.verifyAll(context -> {});
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testRegisterIsRandom() {
-        ConcreteTestBuilder result = builder.registerIsRandom(0, 255);
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testPrintRegister() {
-        ConcreteTestBuilder result = builder.printRegister(0);
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testPrintOperands() {
-        ConcreteTestBuilder result = builder.printOperands();
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testPrintInjectingProcess() {
-        ConcreteTestBuilder result = builder.printInjectingProcess();
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testVerifyFlagsWithOperator() {
-        FlagsCheck<Integer, ?> flagsCheck = new ConcreteFlagsCheck();
-
-        ConcreteTestBuilder result = builder.verifyFlags(flagsCheck, context -> 0x42);
-        assertSame(builder, result);
-        assertNotNull(builder.lastOperation);
-    }
-
-    @Test
-    public void testVerifyFlagsOfLastOp() {
-        FlagsCheck<Integer, ?> flagsCheck = new ConcreteFlagsCheck();
-
-        builder.lastOperation = context -> 0x42;
-        ConcreteTestBuilder result = builder.verifyFlagsOfLastOp(flagsCheck);
-        assertSame(builder, result);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testVerifyFlagsOfLastOpWithoutOperation() {
-        FlagsCheck<Integer, ?> flagsCheck = new ConcreteFlagsCheck();
-
-        builder.verifyFlagsOfLastOp(flagsCheck);
-    }
-
-    private static class ConcreteFlagsCheck extends FlagsCheck<Integer, ConcreteFlagsCheck> {
-        public void verify(CpuVerifier verifier) {
+    public void fixedMemoryInjectorsWriteTheSelectedOperandAndWidth() {
+        List<Consumer<Builder>> injectors = List.of(
+                b -> b.firstIsMemoryByteAt(0x100), b -> b.secondIsMemoryByteAt(0x100),
+                b -> b.firstIsMemoryWordAt(0x100), b -> b.secondIsMemoryWordAt(0x100));
+        int[] expected = {0xCD, 0x34, 0xABCD, 0x1234};
+        for (int i = 0; i < injectors.size(); i++) {
+            setUp();
+            cpuRunner.setByte(0x101, 0x5A);
+            injectors.get(i).accept(builder);
+            builder.run(0).accept(0xABCD, 0x1234);
+            assertMemory(0x100, expected[i], i >= 2);
+            if (i < 2) {
+                cpuVerifier.checkMemoryByte(0x101, 0x5A);
+            }
         }
     }
 
     @Test
-    public void testVerifyByteWithAddress() {
-        ConcreteTestBuilder result = builder.verifyByte(0x100, context -> 0x42);
-        assertSame(builder, result);
-        assertNotNull(builder.lastOperation);
+    public void operandAddressInjectorsWriteTheConfiguredValue() {
+        List<Consumer<Builder>> injectors = List.of(
+                b -> b.firstIsMemoryAddressByte(0x42), b -> b.secondIsMemoryAddressByte(0x42),
+                b -> b.firstIsMemoryAddressWord(0x1234), b -> b.secondIsMemoryAddressWord(0x1234));
+        for (int i = 0; i < injectors.size(); i++) {
+            setUp();
+            injectors.get(i).accept(builder);
+            builder.run(0).accept(0x100, 0x200);
+            assertMemory(i % 2 == 0 ? 0x100 : 0x200, i < 2 ? 0x42 : 0x1234, i >= 2);
+        }
     }
 
     @Test
-    public void testVerifyByteWithAddressOnly() {
-        builder.lastOperation = context -> 0x42;
-        ConcreteTestBuilder result = builder.verifyByte(0x100);
-        assertSame(builder, result);
+    public void crossOperandInjectorsUseTheCorrectAddressAndValue() {
+        List<Consumer<Builder>> injectors = List.of(
+                Builder::firstIsAddressAndSecondIsMemoryByte, Builder::secondIsAddressAndFirstIsMemoryByte,
+                Builder::firstIsAddressAndSecondIsMemoryWord, Builder::secondIsAddressAndFirstIsMemoryWord);
+        for (int i = 0; i < injectors.size(); i++) {
+            setUp();
+            injectors.get(i).accept(builder);
+            builder.run(0).accept(i % 2 == 0 ? 0x100 : 0x1234, i % 2 == 0 ? 0x1234 : 0x100);
+            assertMemory(0x100, i < 2 ? 0x34 : 0x1234, i >= 2);
+        }
     }
 
     @Test
-    public void testVerifyByteWithAddressOperator() {
-        builder.lastOperation = context -> 0x42;
-        ConcreteTestBuilder result = builder.verifyByte(context -> 0x100);
-        assertSame(builder, result);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testVerifyByteWithoutLastOperation() {
-        builder.verifyByte(context -> 0x100);
+    public void byteOperandAddressesAreUnsignedInBothDirections() {
+        ByteBuilder byteBuilder = new ByteBuilder(cpuRunner, cpuVerifier);
+        byteBuilder.firstIsAddressAndSecondIsMemoryByte().run(0).accept((byte) 0xFF, (byte) 0x42);
+        assertMemory(0xFF, 0x42, false);
+        byteBuilder.secondIsAddressAndFirstIsMemoryByte().run(0).accept((byte) 0x43, (byte) 0xFE);
+        assertMemory(0xFE, 0x43, false);
     }
 
     @Test
-    public void testVerifyByteWithBothOperators() {
-        ConcreteTestBuilder result = builder.verifyByte(context -> 0x100, context -> 0x42);
-        assertSame(builder, result);
-        assertNotNull(builder.lastOperation);
+    public void runMethodsAssembleTheSelectedOperandsAndOpcodes() {
+        List<TestRunner<SimpleCpuRunner, Integer>> runs = List.of(
+                builder.run(0xAA, 0xBB),
+                builder.runWithFirstOperand(0xAA),
+                builder.runWithSecondOperand(0xAA),
+                builder.runWithFirst8bitOperand(0xAA),
+                builder.runWithFirst8bitOperandWithOpcodeAfter(0xBB, 0xAA),
+                builder.runWithFirst8bitOperandTwoTimes(0xAA),
+                builder.runWithBothOperandsWithOpcodeAfter(0xBB, 0xAA));
+        int[][] expected = {{0xAA, 0xBB}, {0xAA, 0x34, 0x12}, {0xAA, 0x78, 0x56},
+                {0xAA, 0x34}, {0xAA, 0x34, 0xBB}, {0xAA, 0x34, 0x34},
+                {0xAA, 0x34, 0x12, 0x78, 0x56, 0xBB}};
+        for (int i = 0; i < runs.size(); i++) {
+            runs.get(i).accept(0x1234, 0x5678);
+            for (int address = 0; address < expected[i].length; address++) {
+                cpuVerifier.checkMemoryByte(address, expected[i][address]);
+            }
+        }
     }
 
     @Test
-    public void testVerifyWord() {
-        ConcreteTestBuilder result = builder.verifyWord(context -> 0x100, context -> 0x1234);
-        assertSame(builder, result);
-        assertNotNull(builder.lastOperation);
+    public void explicitExpectationsRemainBoundToTheirPreparedRun() {
+        TestRunner<SimpleCpuRunner, Integer> first = builder.firstIsMemoryByteAt(0x100)
+                .verifyByte(0x100, context -> context.first).run(0);
+        TestRunner<SimpleCpuRunner, Integer> second = builder.secondIsMemoryByteAt(0x200)
+                .verifyByte(context -> 0x200, context -> context.second).run(0);
+        first.accept(0x42, 0x99);
+        second.accept(0x22, 0x55);
+        first.accept(0x43, 0x11);
     }
 
     @Test
-    public void testKeepCurrentInjectorsAfterRun() {
-        ConcreteTestBuilder result = builder.keepCurrentInjectorsAfterRun();
-        assertSame(builder, result);
+    public void wordExpectationUsesItsExplicitAddressAndOperation() {
+        builder.firstIsAddressAndSecondIsMemoryWord()
+                .verifyWord(context -> context.first, context -> context.second)
+                .run(0).accept(0x100, 0x1234);
+    }
+
+    @Test(expected = AssertionError.class)
+    public void memoryExpectationFailsOnAValueMismatch() {
+        builder.firstIsMemoryByteAt(0x100).verifyByte(0x100, context -> context.first + 1)
+                .run(0).accept(0x42, 0);
     }
 
     @Test
-    public void testClearOtherVerifiersAfterRun() {
-        ConcreteTestBuilder result = builder.clearOtherVerifiersAfterRun();
-        assertSame(builder, result);
+    public void runClearsTransientConfigurationAndRetainsSelectedConfiguration() {
+        AtomicInteger retained = new AtomicInteger();
+        AtomicInteger transientCalls = new AtomicInteger();
+        builder.runner.injectNoOperand(runner -> retained.incrementAndGet());
+        builder.keepCurrentInjectorsAfterRun();
+        builder.runner.injectNoOperand(runner -> transientCalls.incrementAndGet());
+        builder.verifyAll(context -> transientCalls.incrementAndGet());
+        builder.run(0).accept(0, 0);
+        builder.run(0).accept(0, 0);
+        assertEquals(2, retained.get());
+        assertEquals(2, transientCalls.get());
     }
 
     @Test
-    public void testFirstIsMemoryByteAt() {
-        ConcreteTestBuilder result = builder.firstIsMemoryByteAt(0x100);
-        assertSame(builder, result);
+    public void clearAllVerifiersAlsoRemovesRetainedVerifiers() {
+        AtomicInteger calls = new AtomicInteger();
+        assertSame(builder, builder.verifyAll(context -> calls.incrementAndGet()).keepCurrentVerifiersAfterRun());
+        builder.run(0).accept(0, 0);
+        builder.clearAllVerifiers().run(0).accept(0, 0);
+        assertEquals(1, calls.get());
     }
 
     @Test
-    public void testSecondIsMemoryByteAt() {
-        ConcreteTestBuilder result = builder.secondIsMemoryByteAt(0x200);
-        assertSame(builder, result);
+    public void expandMemoryAppliesTheOperandFunction() {
+        builder.expandMemory(value -> value.intValue() * 10).run(0).accept(200, 0);
+        assertEquals(2000, memory.getSize());
     }
 
-    @Test
-    public void testFirstIsMemoryWordAt() {
-        ConcreteTestBuilder result = builder.firstIsMemoryWordAt(0x300);
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testSecondIsMemoryWordAt() {
-        ConcreteTestBuilder result = builder.secondIsMemoryWordAt(0x400);
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testFirstIsMemoryAddressByte() {
-        ConcreteTestBuilder result = builder.firstIsMemoryAddressByte(0x42);
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testSecondIsMemoryAddressByte() {
-        ConcreteTestBuilder result = builder.secondIsMemoryAddressByte(0x43);
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testFirstIsMemoryAddressWord() {
-        ConcreteTestBuilder result = builder.firstIsMemoryAddressWord(0x1234);
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testSecondIsMemoryAddressWord() {
-        ConcreteTestBuilder result = builder.secondIsMemoryAddressWord(0x5678);
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testFirstIsAddressAndSecondIsMemoryWord() {
-        ConcreteTestBuilder result = builder.firstIsAddressAndSecondIsMemoryWord();
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testSecondIsAddressAndFirstIsMemoryWord() {
-        ConcreteTestBuilder result = builder.secondIsAddressAndFirstIsMemoryWord();
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testFirstIsAddressAndSecondIsMemoryByte() {
-        ConcreteTestBuilder result = builder.firstIsAddressAndSecondIsMemoryByte();
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testSecondIsAddressAndFirstIsMemoryByte() {
-        ConcreteTestBuilder result = builder.secondIsAddressAndFirstIsMemoryByte();
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testSetFlags() {
-        ConcreteTestBuilder result = builder.setFlags(0xFF);
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testExpandMemory() {
-        ConcreteTestBuilder result = builder.expandMemory(num -> num.intValue() * 2);
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testRun() {
-        TestRunner<SimpleCpuRunner, Integer> result = builder.run(0x00, 0x01, 0x02);
-        assertNotNull(result);
-    }
-
-    @Test
-    public void testRunWithFirstOperand() {
-        TestRunner<SimpleCpuRunner, Integer> result = builder.runWithFirstOperand(0x00, 0x01);
-        assertNotNull(result);
-    }
-
-    @Test
-    public void testRunWithSecondOperand() {
-        TestRunner<SimpleCpuRunner, Integer> result = builder.runWithSecondOperand(0x00, 0x01);
-        assertNotNull(result);
-    }
-
-    @Test
-    public void testRunWithFirst8bitOperandWithOpcodeAfter() {
-        TestRunner<SimpleCpuRunner, Integer> result = builder.runWithFirst8bitOperandWithOpcodeAfter(0xFF, 0x00, 0x01);
-        assertNotNull(result);
-    }
-
-    @Test
-    public void testRunWithFirst8bitOperand() {
-        TestRunner<SimpleCpuRunner, Integer> result = builder.runWithFirst8bitOperand(0x00, 0x01);
-        assertNotNull(result);
-    }
-
-    @Test
-    public void testRunWithFirst8bitOperandTwoTimes() {
-        TestRunner<SimpleCpuRunner, Integer> result = builder.runWithFirst8bitOperandTwoTimes(0x00, 0x01);
-        assertNotNull(result);
-    }
-
-    @Test
-    public void testRunWithBothOperandsWithOpcodeAfter() {
-        TestRunner<SimpleCpuRunner, Integer> result = builder.runWithBothOperandsWithOpcodeAfter(0xFF, 0x00, 0x01);
-        assertNotNull(result);
-    }
-
-    @Test
-    public void testMethodChaining() {
-        // Test that all methods return the builder for chaining
-        ConcreteTestBuilder result = builder
-                .clearAllVerifiers()
-                .setFlags(0xFF)
-                .firstIsMemoryByteAt(0x100)
-                .secondIsMemoryWordAt(0x200)
-                .keepCurrentInjectorsAfterRun()
-                .clearOtherVerifiersAfterRun();
-
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testFirstIsAddressAndSecondIsMemoryWordInjectsCorrectly() {
-        ConcreteTestBuilder result = builder.firstIsAddressAndSecondIsMemoryWord();
-        assertSame(builder, result);
-        // The actual injection happens during test execution, not during builder setup
-    }
-
-    @Test
-    public void testSecondIsAddressAndFirstIsMemoryWordInjectsCorrectly() {
-        ConcreteTestBuilder result = builder.secondIsAddressAndFirstIsMemoryWord();
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testFirstIsAddressAndSecondIsMemoryByteInjectsCorrectly() {
-        ConcreteTestBuilder result = builder.firstIsAddressAndSecondIsMemoryByte();
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testByteOperandUsedAsAddressIsUnsigned() {
-        SimpleCpuRunner runner = mock(SimpleCpuRunner.class);
-        when(runner.getRegisters()).thenReturn(java.util.Collections.emptyList());
-        ConcreteByteTestBuilder byteBuilder = new ConcreteByteTestBuilder(runner, cpuVerifier);
-        byteBuilder.firstIsAddressAndSecondIsMemoryByte();
-
-        byteBuilder.runner.accept((byte) 0xFF, (byte) 0x42);
-
-        verify(runner).setByte(0xFF, 0x42);
-    }
-
-    @Test
-    public void testSecondIsAddressAndFirstIsMemoryByteInjectsCorrectly() {
-        ConcreteTestBuilder result = builder.secondIsAddressAndFirstIsMemoryByte();
-        assertSame(builder, result);
-    }
-
-    @Test
-    public void testLastOperationIsSetByVerifyFlags() {
-        FlagsCheck<Integer, ?> flagsCheck = new ConcreteFlagsCheck();
-
-        assertNull(builder.lastOperation);
-        builder.verifyFlags(flagsCheck, context -> 0x42);
-        assertNotNull(builder.lastOperation);
-
-        // Test that the operation returns the correct value
-        RunnerContext<Integer> context = new RunnerContext<>(0, 0, 0);
-        assertEquals(0x42, builder.lastOperation.apply(context).intValue());
-    }
-
-    @Test
-    public void testLastOperationIsSetByVerifyByte() {
-        assertNull(builder.lastOperation);
-        builder.verifyByte(0x100, context -> 0x55);
-        assertNotNull(builder.lastOperation);
-
-        RunnerContext<Integer> context = new RunnerContext<>(0, 0, 0);
-        assertEquals(0x55, builder.lastOperation.apply(context).intValue());
-    }
-
-    @Test
-    public void testLastOperationIsSetByVerifyWord() {
-        assertNull(builder.lastOperation);
-        builder.verifyWord(context -> 0x200, context -> 0xABCD);
-        assertNotNull(builder.lastOperation);
-
-        RunnerContext<Integer> context = new RunnerContext<>(0, 0, 0);
-        assertEquals(0xABCD, builder.lastOperation.apply(context).intValue());
-    }
-
-    @Test
-    public void testExpandMemoryAppliesFunction() {
-        builder.expandMemory(num -> num.intValue() * 10);
-
-        // The expandMemory should inject a function that calls ensureProgramSize
-        // We can verify this by checking that it doesn't throw
-        assertNotNull(builder.runner);
-    }
-
-    @Test
-    public void testRunCreatesNewTestRunner() {
-        TestRunner<SimpleCpuRunner, Integer> runner1 = builder.run(0x00);
-        TestRunner<SimpleCpuRunner, Integer> runner2 = builder.run(0x01);
-
-        assertNotNull(runner1);
-        assertNotNull(runner2);
-        assertNotSame(runner1, runner2); // Should create different instances
-    }
-
-    @Test
-    public void testRunMethodsAcceptVarargs() {
-        // Test that various numbers of instruction bytes work
-        assertNotNull(builder.run());
-        assertNotNull(builder.run(0x00));
-        assertNotNull(builder.run(0x00, 0x01));
-        assertNotNull(builder.run(0x00, 0x01, 0x02));
-        assertNotNull(builder.runWithFirstOperand(0x00, 0x01, 0x02, 0x03));
-        assertNotNull(builder.runWithSecondOperand(0x00, 0x01, 0x02, 0x03, 0x04));
+    private void assertMemory(int address, int expected, boolean word) {
+        if (word) {
+            cpuVerifier.checkMemoryTwoBytes(address, expected);
+        } else {
+            cpuVerifier.checkMemoryByte(address, expected);
+        }
     }
 }

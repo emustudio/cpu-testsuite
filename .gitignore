@@ -156,3 +156,6 @@ gradle-app.setting
 
 # Generated C4 architecture documentation (gradle doc)
 docs/output/
+
+# Local APEX run state
+/.agents/apex/

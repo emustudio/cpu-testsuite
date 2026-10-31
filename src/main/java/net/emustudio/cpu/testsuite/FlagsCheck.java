@@ -32,6 +32,7 @@ public abstract class FlagsCheck<T extends Number, SpecificFlagsBuilder extends 
     protected final List<BiConsumer<RunnerContext<T>, Integer>> evaluators = new ArrayList<>();
 
     private boolean switchFirstAndSecond;
+    private int unconditionalFlags;
     /**
      * The flags that are expected to be set.
      */
@@ -48,12 +49,12 @@ public abstract class FlagsCheck<T extends Number, SpecificFlagsBuilder extends 
     }
 
     /**
-     * Resets the expected flags and not-expected flags to zero.
+     * Clears evaluated flags while preserving unconditional expectations.
      *
      * @return this flags check instance for method chaining
      */
     public SpecificFlagsBuilder reset() {
-        expectedFlags = 0;
+        expectedFlags = unconditionalFlags;
         expectedNotFlags = 0;
         return (SpecificFlagsBuilder) this;
     }
@@ -65,6 +66,7 @@ public abstract class FlagsCheck<T extends Number, SpecificFlagsBuilder extends 
      * @return this flags check instance for method chaining
      */
     public SpecificFlagsBuilder or(int flags) {
+        unconditionalFlags |= flags;
         expectedFlags |= flags;
         return (SpecificFlagsBuilder) this;
     }
@@ -118,18 +120,18 @@ public abstract class FlagsCheck<T extends Number, SpecificFlagsBuilder extends 
 
     /**
      * Evaluates all registered evaluators with the given context and result.
-     * This updates the expected and not-expected flags based on the evaluators' logic.
+     * Starts from unconditional expectations and recomputes conditional flags for this case.
      *
      * @param context the runner context containing operands and state
      * @param result the operation result
      */
     public void eval(RunnerContext<T> context, int result) {
+        reset();
+        if (switchFirstAndSecond) {
+            context = context.switchFirstAndSecond();
+        }
         for (BiConsumer<RunnerContext<T>, Integer> evaluator : evaluators) {
-            if (switchFirstAndSecond) {
-                evaluator.accept(context.switchFirstAndSecond(), result);
-            } else {
-                evaluator.accept(context, result);
-            }
+            evaluator.accept(context, result);
         }
     }
 

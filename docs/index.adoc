@@ -46,7 +46,7 @@ dependency by emuStudio CPU plug-ins.
 The suite is applicable when the CPU plug-in satisfies these constraints:
 
 * Memory is a collection of linearly ordered cells of type `Short` or `Byte`.
-* The CPU uses little-endian byte order.
+* Word injection and verification use the memory stub's configured byte order and optional per-byte bit reversal.
 * The CPU exposes a program counter and a stack pointer.
 * The CPU reports its address-space size through `CPU.getAddressSpaceSize()`.
 * Instruction operands are `Byte` (8-bit) or `Integer` (16-bit).

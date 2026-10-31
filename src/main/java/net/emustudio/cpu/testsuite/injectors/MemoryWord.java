@@ -34,16 +34,14 @@ public class MemoryWord<TCpuRunner extends CpuRunner<?>, TOperand extends Number
 
     /**
      * Injects a 16-bit word value into memory at the configured address.
-     * The value is written as two bytes in little-endian order.
+     * The value uses the memory stub's word layout.
      *
      * @param cpuRunner the CPU runner instance
      * @param value the word value to inject (higher than 16-bit values are truncated)
      */
     @Override
     public void accept(TCpuRunner cpuRunner, TOperand value) {
-        int tmp = value.intValue();
-        cpuRunner.setByte(address, tmp & 0xFF);
-        cpuRunner.setByte(address + 1, (tmp >>> 8) & 0xFF);
+        cpuRunner.setWord(address, value.intValue());
     }
 
     /**

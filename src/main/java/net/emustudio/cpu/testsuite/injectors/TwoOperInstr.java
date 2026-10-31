@@ -64,15 +64,9 @@ public class TwoOperInstr<TCpuRunner extends CpuRunner<?>, TOperand extends Numb
 
     @Override
     public void inject(TCpuRunner cpuRunner, TOperand first, TOperand second) {
-        strategy.setOperands(first, second);
-
-        int tmpFirst = first.intValue() & 0xFFFF;
-        int tmpSecond = second.intValue() & 0xFFFF;
-
-        cpuRunner.setProgram(strategy.generate());
-        cpuRunner.ensureProgramSize(Math.max(tmpFirst + 2, tmpSecond + 2));
-
-        strategy.clearOperands();
+        cpuRunner.setProgram(strategy.generate(cpuRunner.getWordReadingStrategy(), first, second));
+        cpuRunner.ensureProgramSize(Math.max(DefaultProgramGenerator.requiredMemorySize(first),
+                DefaultProgramGenerator.requiredMemorySize(second)));
     }
 
     @Override
