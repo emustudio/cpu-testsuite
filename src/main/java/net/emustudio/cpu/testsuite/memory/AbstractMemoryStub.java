@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.cpu.testsuite.memory;
 
-import net.emustudio.emulib.plugins.memory.annotations.MemoryContextAnnotations;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -72,11 +71,6 @@ abstract class AbstractMemoryStub<T extends Number> implements MemoryStub<T> {
     @Override
     public boolean areMemoryNotificationsEnabled() {
         return false;
-    }
-
-    @Override
-    public MemoryContextAnnotations annotations() {
-        return null;
     }
 
     @Override
