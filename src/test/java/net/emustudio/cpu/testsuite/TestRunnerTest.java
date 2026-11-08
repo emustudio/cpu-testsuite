@@ -9,8 +9,6 @@ import net.emustudio.emulib.plugins.cpu.CPU;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -29,34 +27,14 @@ import static org.mockito.Mockito.*;
 public class TestRunnerTest {
     private SimpleCpuRunner cpuRunner;
     private TestRunner<SimpleCpuRunner, Integer> testRunner;
-    private CPU.CPUListener cpuListener;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
         CPU mockCpu = mock(CPU.class);
         when(mockCpu.getAddressSpaceSize()).thenReturn(65536);
 
-        // Capture the CPU listener so we can simulate state changes
-        doAnswer(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) {
-                cpuListener = invocation.getArgument(0);
-                return null;
-            }
-        }).when(mockCpu).addCPUListener(any(CPU.CPUListener.class));
-
-        // Mock CPU.step() to call the listener with STATE_STOPPED_BREAK
-        doAnswer(new Answer<Void>() {
-            @Override
-            public Void answer(InvocationOnMock invocation) {
-                // Simulate CPU calling the listener when step completes
-                if (cpuListener != null) {
-                    cpuListener.runStateChanged(CPU.RunState.STATE_STOPPED_BREAK);
-                }
-                return null;
-            }
-        }).when(mockCpu).step();
+        when(mockCpu.step()).thenReturn(CPU.RunState.STATE_STOPPED_BREAK);
 
         cpuRunner = spy(new SimpleCpuRunner(mockCpu, memory));
         testRunner = new TestRunner<>(cpuRunner);

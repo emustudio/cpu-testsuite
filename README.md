@@ -173,7 +173,7 @@ test.printInjectingProcess()
 
 Flag rules added with `FlagsCheck.or(mask)` apply to every generated case. Conditional rules are recomputed for each case, so a flag that changes between set and clear does not retain its previous expectation.
 
-If `CpuRunner.step()` reports an unexpected run state, ensure the CPU notifies its `CPUListener` during the step. The default expected state is `STATE_STOPPED_BREAK`; use `expectRunState(...)` when testing a different outcome.
+`CpuRunner.step()` checks the result returned by the CPU's synchronous `step()` method. The default expected state is `STATE_STOPPED_BREAK`; use `expectRunState(...)` when testing a different outcome. An execution exception fails the test with the original exception as its cause. CPU lifecycle notifications belong to the host and are not needed for instruction tests.
 
 ## Building
 

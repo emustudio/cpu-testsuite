@@ -1,2 +1,11 @@
 rootProject.name = 'cpu-testsuite'
 
+// Develop the shared test helpers against the same synchronous CPU contract as the plugins.
+if (providers.gradleProperty('emuLibPath').isPresent()) {
+    includeBuild(providers.gradleProperty('emuLibPath').get()) {
+        dependencySubstitution {
+            substitute module('net.emustudio:emulib') using project(':')
+        }
+    }
+}
+
