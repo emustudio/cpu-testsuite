@@ -5,8 +5,6 @@ package net.emustudio.cpu.testsuite.memory;
 import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.jcip.annotations.NotThreadSafe;
 
-import static net.emustudio.emulib.runtime.helpers.NumberUtils.nativeShortsToBytes;
-
 /** Byte-cell memory context for CPU tests. */
 @SuppressWarnings("unused")
 @NotThreadSafe
@@ -40,7 +38,11 @@ public class ByteMemoryStub extends AbstractMemoryStub<Byte> {
 
     @Override
     public void setMemory(short[] memory) {
-        setMemoryCells(nativeShortsToBytes(memory));
+        Byte[] cells = new Byte[memory.length];
+        for (int i = 0; i < memory.length; i++) {
+            cells[i] = (byte) memory[i];
+        }
+        setMemoryCells(cells);
     }
 
     @Override

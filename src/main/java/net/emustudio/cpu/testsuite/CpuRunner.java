@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.cpu.testsuite;
 
-import net.emustudio.cpu.testsuite.internal.RunStateListenerStub;
 import net.emustudio.cpu.testsuite.internal.WordLayout;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
 import net.emustudio.emulib.plugins.cpu.CPU;
@@ -31,7 +30,6 @@ public abstract class CpuRunner<TCpu extends CPU> {
     @Deprecated
     public static final int MIN_MEMORY_SIZE = 65536;
 
-    private final RunStateListenerStub runStateListener = new RunStateListenerStub();
     /**
      * The CPU instance being tested.
      */
@@ -53,7 +51,6 @@ public abstract class CpuRunner<TCpu extends CPU> {
     public CpuRunner(TCpu cpu, MemoryStub<?> memoryStub) {
         this.cpu = Objects.requireNonNull(cpu);
         this.memoryStub = Objects.requireNonNull(memoryStub);
-        cpu.addCPUListener(runStateListener);
     }
 
     /**
@@ -191,9 +188,15 @@ public abstract class CpuRunner<TCpu extends CPU> {
      * @throws AssertionError if the actual run state doesn't match the expected state
      */
     public void step() {
-        cpu.step();
+        CPU.RunState actual;
+        try {
+            actual = cpu.step();
+        } catch (Exception failure) {
+            if (failure instanceof InterruptedException) Thread.currentThread().interrupt();
+            throw new AssertionError("CPU step failed at PC=" + getPC(), failure);
+        }
         System.out.flush();
-        assertEquals("PC=" + getPC(), expectedRunState, runStateListener.runState);
+        assertEquals("PC=" + getPC(), expectedRunState, actual);
     }
 
     /**
