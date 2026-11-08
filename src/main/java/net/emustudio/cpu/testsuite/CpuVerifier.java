@@ -56,8 +56,7 @@ public abstract class CpuVerifier {
      */
     public void checkMemoryTwoBytes(int address, int expected) {
         expected &= 0xFFFF;
-        Byte[] word = NumberUtils.numbersToBytes(memoryStub.read(address, 2));
-        int actual = NumberUtils.readInt(word, memoryStub.getWordReadingStrategy());
+        int actual = NumberUtils.readInt(memoryStub.read(address, 2), memoryStub.getWordReadingStrategy());
 
         assertEquals(
                 String.format("Expected word mem[%04x]=%04x, but was %04x", address, expected, actual),

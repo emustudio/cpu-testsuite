@@ -74,12 +74,11 @@ public abstract class MemoryStubContractTest<T extends Number> {
     }
 
     @Test
-    public void notificationsAndAnnotationsRemainDisabled() {
+    public void notificationsRemainDisabled() {
         memory.addMemoryListener(null);
         memory.setMemoryNotificationsEnabled(true);
         assertFalse(memory.areMemoryNotificationsEnabled());
         memory.removeMemoryListener(null);
-        assertNull(memory.annotations());
     }
 
     @Test

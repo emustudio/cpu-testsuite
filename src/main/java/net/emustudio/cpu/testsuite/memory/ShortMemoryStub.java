@@ -2,7 +2,6 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.cpu.testsuite.memory;
 
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
 import net.jcip.annotations.NotThreadSafe;
 
 /** Short-cell memory context for CPU tests. */
@@ -20,7 +19,11 @@ public class ShortMemoryStub extends AbstractMemoryStub<Short> {
 
     @Override
     public void setMemory(short[] memory) {
-        setMemoryCells(NumberUtils.nativeShortsToShorts(memory));
+        Short[] cells = new Short[memory.length];
+        for (int i = 0; i < memory.length; i++) {
+            cells[i] = memory[i];
+        }
+        setMemoryCells(cells);
     }
 
     @Override
