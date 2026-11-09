@@ -5,7 +5,7 @@ package net.emustudio.cpu.testsuite.injectors;
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.support.SimpleCpuRunner;
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -19,7 +19,7 @@ public class MemoryAddressTest {
 
     @Before
     public void setUp() {
-        memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         CPU mockCpu = mock(CPU.class);
         when(mockCpu.getAddressSpaceSize()).thenReturn(65536);
         cpuRunner = new SimpleCpuRunner(mockCpu, memory);

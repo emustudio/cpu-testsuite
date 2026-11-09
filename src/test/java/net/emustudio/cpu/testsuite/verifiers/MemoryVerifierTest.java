@@ -5,7 +5,7 @@ package net.emustudio.cpu.testsuite.verifiers;
 import net.emustudio.cpu.testsuite.RunnerContext;
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.support.SimpleCpuVerifier;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import org.junit.Test;
 
 import static org.junit.Assert.assertThrows;
@@ -13,7 +13,7 @@ import static org.junit.Assert.assertThrows;
 public class MemoryVerifierTest {
     @Test
     public void byteAndWordChecksUseTheComputedAddressAndExpectedValue() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.BIG_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.BIG_ENDIAN);
         memory.setMemory(new byte[] {0, 0, 0, 0x12, 0x34});
         SimpleCpuVerifier cpuVerifier = new SimpleCpuVerifier(memory);
         RunnerContext<Integer> context = new RunnerContext<>(3, 0x1234, 0);

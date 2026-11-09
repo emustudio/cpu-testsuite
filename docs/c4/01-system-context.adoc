@@ -18,7 +18,7 @@ Person(dev, "CPU Plug-in Developer", "Writes declarative test specifications tha
 System(suite, "CPU Test Suite", "Declarative, generative JUnit test framework for emuStudio CPU plug-ins")
 
 System_Ext(plugin, "CPU Plug-in under Test", "An emuStudio CPU implementation (e.g. Intel 8080, Z80)")
-System_Ext(emulib, "emuLib", "emuStudio plug-in API & runtime helpers: CPU, MemoryContext, NumberUtils")
+System_Ext(emulib, "emuLib", "emuStudio plug-in API & runtime helpers: CPU, MemoryContext, Numbers")
 System_Ext(junit, "JUnit 4", "Test runner and assertion library")
 System_Ext(build, "Build Tool (Gradle / Maven)", "Resolves the test-suite artifact and runs the test task")
 
@@ -27,7 +27,7 @@ Rel(dev, plugin, "Develops")
 Rel(build, junit, "Runs test classes via")
 Rel(junit, suite, "Executes tests built on")
 Rel(suite, plugin, "Resets, injects state, single-steps & verifies", "in-process")
-Rel(suite, emulib, "Uses", "CPU, MemoryContext, NumberUtils")
+Rel(suite, emulib, "Uses", "CPU, MemoryContext, Numbers")
 Rel(plugin, emulib, "Implements", "plug-in API")
 Rel(suite, junit, "Asserts with", "org.junit.Assert")
 @enduml
@@ -53,7 +53,7 @@ Rel(suite, junit, "Asserts with", "org.junit.Assert")
 
 | *emuLib*
 | Shared emuStudio plug-in API and runtime helpers. The suite depends on `CPU`,
-  `MemoryContext` and `NumberUtils`; the CPU plug-in implements the same API.
+  `MemoryContext` and `Numbers`; the CPU plug-in implements the same API.
 
 | *JUnit 4*
 | Executes the developer's test classes and provides the assertion primitives

@@ -2,10 +2,10 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.cpu.testsuite.memory;
 
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import net.jcip.annotations.NotThreadSafe;
 
-import static net.emustudio.emulib.runtime.helpers.NumberUtils.nativeShortsToBytes;
+import static net.emustudio.emulib.Numbers.nativeShortsToBytes;
 
 /** Byte-cell memory context for CPU tests. */
 @SuppressWarnings("unused")
@@ -26,7 +26,7 @@ public class ByteMemoryStub extends AbstractMemoryStub<Byte> {
      * @param memory new memory cells
      */
     public void setMemory(byte[] memory) {
-        setMemoryCells(NumberUtils.nativeBytesToBytes(memory));
+        setMemoryCells(Numbers.nativeBytesToBytes(memory));
     }
 
     /**

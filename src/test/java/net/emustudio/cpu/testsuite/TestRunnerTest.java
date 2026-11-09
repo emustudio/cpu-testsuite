@@ -6,7 +6,7 @@ import net.emustudio.cpu.testsuite.injectors.TwoOperInjector;
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.support.SimpleCpuRunner;
 import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
@@ -33,7 +33,7 @@ public class TestRunnerTest {
 
     @Before
     public void setUp() {
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         CPU mockCpu = mock(CPU.class);
         when(mockCpu.getAddressSpaceSize()).thenReturn(65536);
 

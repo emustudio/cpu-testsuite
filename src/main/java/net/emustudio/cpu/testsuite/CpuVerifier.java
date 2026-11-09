@@ -3,7 +3,7 @@
 package net.emustudio.cpu.testsuite;
 
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import net.jcip.annotations.Immutable;
 
 import java.util.Objects;
@@ -56,8 +56,8 @@ public abstract class CpuVerifier {
      */
     public void checkMemoryTwoBytes(int address, int expected) {
         expected &= 0xFFFF;
-        Byte[] word = NumberUtils.numbersToBytes(memoryStub.read(address, 2));
-        int actual = NumberUtils.readInt(word, memoryStub.getWordReadingStrategy());
+        Byte[] word = Numbers.numbersToBytes(memoryStub.read(address, 2));
+        int actual = Numbers.readInt(word, memoryStub.getWordReadingStrategy());
 
         assertEquals(
                 String.format("Expected word mem[%04x]=%04x, but was %04x", address, expected, actual),

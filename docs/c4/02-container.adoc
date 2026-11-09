@@ -17,7 +17,7 @@ title Container Diagram — CPU Test Suite (inside the JUnit test JVM)
 Person(dev, "CPU Plug-in Developer", "Writes tests & CPU-specific adapters")
 
 System_Ext(junit, "JUnit 4", "Test runner & assertions")
-System_Ext(emulib, "emuLib", "CPU, MemoryContext, NumberUtils")
+System_Ext(emulib, "emuLib", "CPU, MemoryContext, Numbers")
 
 System_Boundary(jvm, "Test Execution (JVM)") {
     Container(tests, "CPU Plug-in Test Suite (consumer code)", "Java + JUnit", "Instruction test classes plus CPU-specific CpuRunner, CpuVerifier, FlagsCheck and TestBuilder adapters")
@@ -29,7 +29,7 @@ Rel(dev, tests, "Writes & maintains")
 Rel(junit, tests, "Discovers & runs")
 Rel(tests, lib, "Configures tests via fluent API; extends abstract adapters", "TestBuilder, CpuRunner, CpuVerifier, FlagsCheck")
 Rel(lib, plugin, "Drives (reset / step) & inspects state of", "via adapters")
-Rel(lib, emulib, "Uses", "CPU, MemoryContext, NumberUtils")
+Rel(lib, emulib, "Uses", "CPU, MemoryContext, Numbers")
 Rel(lib, junit, "Asserts with", "org.junit.Assert")
 Rel(plugin, emulib, "Implements", "plug-in API")
 @enduml
