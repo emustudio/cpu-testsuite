@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.cpu.testsuite.internal;
 
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.NumberUtils;
 
 /** Internal encoding of 16-bit values using the memory stub's word-reading strategy. */
 public final class WordLayout {

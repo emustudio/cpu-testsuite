@@ -5,7 +5,7 @@ package net.emustudio.cpu.testsuite.verifiers;
 import net.emustudio.cpu.testsuite.RunnerContext;
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.support.SimpleCpuVerifier;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.NumberUtils;
 import org.junit.Test;
 
 import static org.junit.Assert.assertThrows;

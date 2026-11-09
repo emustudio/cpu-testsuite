@@ -3,7 +3,7 @@
 package net.emustudio.cpu.testsuite;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.NumberUtils;
 import org.junit.Before;
 import org.junit.Test;
 

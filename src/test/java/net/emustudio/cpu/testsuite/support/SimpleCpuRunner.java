@@ -4,7 +4,7 @@ package net.emustudio.cpu.testsuite.support;
 
 import net.emustudio.cpu.testsuite.CpuRunner;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
-import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPU;
 
 import java.util.Collections;
 import java.util.List;

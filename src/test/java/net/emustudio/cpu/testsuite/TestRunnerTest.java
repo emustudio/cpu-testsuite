@@ -5,8 +5,8 @@ package net.emustudio.cpu.testsuite;
 import net.emustudio.cpu.testsuite.injectors.TwoOperInjector;
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.support.SimpleCpuRunner;
-import net.emustudio.emulib.plugins.cpu.CPU;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.plugin.cpu.CPU;
+import net.emustudio.emulib.NumberUtils;
 import org.junit.Before;
 import org.junit.Test;
 

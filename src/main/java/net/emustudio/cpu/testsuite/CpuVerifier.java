@@ -3,7 +3,7 @@
 package net.emustudio.cpu.testsuite;
 
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.NumberUtils;
 import net.jcip.annotations.Immutable;
 
 import java.util.Objects;
