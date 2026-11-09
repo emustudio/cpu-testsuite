@@ -35,7 +35,7 @@ dependency by emuStudio CPU plug-ins.
 | Aspect | Value
 
 | Type | Java 11 library (JUnit 4 test framework)
-| Key dependency | emuLib (`CPU`, `MemoryContext`, `NumberUtils`)
+| Key dependency | emuLib (`CPU`, `MemoryContext`, `Numbers`)
 | Assertion backend | JUnit 4 (`org.junit.Assert`)
 | Root package | `net.emustudio.cpu.testsuite`
 | Extension points | `CpuRunner`, `CpuVerifier`, `FlagsCheck`, `TestBuilder`
