@@ -12,7 +12,7 @@ import net.emustudio.cpu.testsuite.memory.ShortMemoryStub;
 import net.emustudio.cpu.testsuite.support.SimpleCpuRunner;
 import net.emustudio.cpu.testsuite.support.SimpleCpuVerifier;
 import net.emustudio.emulib.plugin.cpu.CPU;
-import net.emustudio.emulib.NumberUtils.Strategy;
+import net.emustudio.emulib.Numbers.Strategy;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -5,7 +5,7 @@ package net.emustudio.cpu.testsuite;
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.support.SimpleCpuRunner;
 import net.emustudio.emulib.plugin.cpu.CPU;
-import net.emustudio.emulib.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -20,7 +20,7 @@ public class CpuRunnerTest {
     public void stepChecksReturnedTerminalState() throws Exception {
         CPU cpu = mock(CPU.class);
         when(cpu.step()).thenReturn(CPU.RunState.STATE_STOPPED_NORMAL);
-        SimpleCpuRunner runner = new SimpleCpuRunner(cpu, new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN));
+        SimpleCpuRunner runner = new SimpleCpuRunner(cpu, new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN));
         runner.expectRunState(CPU.RunState.STATE_STOPPED_NORMAL);
 
         runner.step();
@@ -30,7 +30,7 @@ public class CpuRunnerTest {
     public void stepRejectsUnexpectedReturnedState() throws Exception {
         CPU cpu = mock(CPU.class);
         when(cpu.step()).thenReturn(CPU.RunState.STATE_STOPPED_BAD_INSTR);
-        SimpleCpuRunner runner = new SimpleCpuRunner(cpu, new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN));
+        SimpleCpuRunner runner = new SimpleCpuRunner(cpu, new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN));
 
         AssertionError failure = assertThrows(AssertionError.class, runner::step);
 
@@ -43,7 +43,7 @@ public class CpuRunnerTest {
         CPU cpu = mock(CPU.class);
         Exception executionFailure = new Exception("Invalid instruction");
         when(cpu.step()).thenThrow(executionFailure);
-        SimpleCpuRunner runner = new SimpleCpuRunner(cpu, new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN));
+        SimpleCpuRunner runner = new SimpleCpuRunner(cpu, new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN));
 
         AssertionError failure = assertThrows(AssertionError.class, runner::step);
 
@@ -54,7 +54,7 @@ public class CpuRunnerTest {
     public void testEnsureProgramSizeUsesCpuAddressSpaceSize() {
         CPU cpu = mock(CPU.class);
         when(cpu.getAddressSpaceSize()).thenReturn(256);
-        ByteMemoryStub memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        ByteMemoryStub memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         SimpleCpuRunner runner = new SimpleCpuRunner(cpu, memory);
 
         runner.ensureProgramSize(1);

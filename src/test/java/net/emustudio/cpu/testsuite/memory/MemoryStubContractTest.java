@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.cpu.testsuite.memory;
 
-import net.emustudio.emulib.NumberUtils.Strategy;
+import net.emustudio.emulib.Numbers.Strategy;
 import org.junit.Before;
 import org.junit.Test;
 

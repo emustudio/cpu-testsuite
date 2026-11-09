@@ -2,7 +2,7 @@
    SPDX-License-Identifier: GPL-3.0-or-later */
 package net.emustudio.cpu.testsuite.injectors.internal;
 
-import net.emustudio.emulib.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -11,7 +11,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class DefaultProgramGeneratorTest {
-    private static final int LITTLE_ENDIAN = NumberUtils.Strategy.LITTLE_ENDIAN;
+    private static final int LITTLE_ENDIAN = Numbers.Strategy.LITTLE_ENDIAN;
     private DefaultProgramGenerator<Byte> byteGenerator;
     private DefaultProgramGenerator<Integer> intGenerator;
 

@@ -5,7 +5,7 @@ package net.emustudio.cpu.testsuite;
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.support.SimpleCpuVerifier;
 import net.emustudio.cpu.testsuite.verifiers.FlagsVerifier;
-import net.emustudio.emulib.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -18,7 +18,7 @@ public class FlagsCheckTest {
     public void unconditionalExpectationIsCheckedOnEveryVerification() {
         Check check = new Check().or(1);
         int[] actualFlags = {0};
-        SimpleCpuVerifier verifier = new SimpleCpuVerifier(new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN)) {
+        SimpleCpuVerifier verifier = new SimpleCpuVerifier(new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN)) {
             @Override
             public void checkFlags(int mask) {
                 assertEquals(mask, actualFlags[0] & mask);

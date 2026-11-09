@@ -6,7 +6,7 @@ import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
 import net.emustudio.cpu.testsuite.support.SimpleCpuRunner;
 import net.emustudio.cpu.testsuite.support.SimpleCpuVerifier;
 import net.emustudio.emulib.plugin.cpu.CPU;
-import net.emustudio.emulib.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,7 +38,7 @@ public class TestBuilderTest {
 
     @Before
     public void setUp() {
-        memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         CPU cpu = mock(CPU.class);
         when(cpu.getAddressSpaceSize()).thenReturn(256);
         cpuRunner = new SimpleCpuRunner(cpu, memory) {
