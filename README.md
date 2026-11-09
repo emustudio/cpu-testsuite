@@ -159,7 +159,7 @@ The provided stubs are:
 - `ByteMemoryStub` for byte cells;
 - `ShortMemoryStub` for short cells.
 
-Both implement emuLib's `MemoryContext`. Pass the required `NumberUtils.Strategy` to their constructors.
+Both implement emuLib's `MemoryContext`. Pass the required `Numbers.Strategy` to their constructors.
 
 ## Debugging
 

@@ -14,7 +14,7 @@ LAYOUT_WITH_LEGEND()
 title Component Diagram — CPU Test Suite Library
 
 Container(tests, "CPU Plug-in Test Suite (consumer code)", "Java + JUnit", "Test classes + CPU adapters")
-System_Ext(emulib, "emuLib", "CPU, MemoryContext, NumberUtils")
+System_Ext(emulib, "emuLib", "CPU, MemoryContext, Numbers")
 System_Ext(junit, "JUnit 4", "Assertions")
 
 Container_Boundary(lib, "CPU Test Suite Library") {
@@ -56,7 +56,7 @@ Rel(verifiers, context, "Read expected inputs from")
 
 Rel(cpurunner, memory, "Reads/writes program & data")
 Rel(cpuverifier, memory, "Reads results from")
-Rel(cpurunner, emulib, "Wraps CPU / uses NumberUtils")
+Rel(cpurunner, emulib, "Wraps CPU / uses Numbers")
 Rel(memory, emulib, "Implements MemoryContext")
 Rel(cpuverifier, junit, "assertEquals")
 @enduml
