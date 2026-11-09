@@ -3,7 +3,7 @@
 package net.emustudio.cpu.testsuite;
 
 import net.emustudio.cpu.testsuite.memory.ByteMemoryStub;
-import net.emustudio.emulib.runtime.helpers.NumberUtils;
+import net.emustudio.emulib.Numbers;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -38,7 +38,7 @@ public class CpuVerifierTest {
 
     @Before
     public void setUp() {
-        memory = new ByteMemoryStub(NumberUtils.Strategy.LITTLE_ENDIAN);
+        memory = new ByteMemoryStub(Numbers.Strategy.LITTLE_ENDIAN);
         verifier = new TestCpuVerifier(memory);
     }
 
@@ -81,7 +81,7 @@ public class CpuVerifierTest {
 
     @Test
     public void testCheckMemoryTwoBytesBigEndian() {
-        ByteMemoryStub bigEndianMemory = new ByteMemoryStub(NumberUtils.Strategy.BIG_ENDIAN);
+        ByteMemoryStub bigEndianMemory = new ByteMemoryStub(Numbers.Strategy.BIG_ENDIAN);
         TestCpuVerifier bigEndianVerifier = new TestCpuVerifier(bigEndianMemory);
 
         bigEndianMemory.write(0x100, (byte) 0x12);

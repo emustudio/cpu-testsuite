@@ -4,7 +4,7 @@ package net.emustudio.cpu.testsuite;
 
 import net.emustudio.cpu.testsuite.internal.WordLayout;
 import net.emustudio.cpu.testsuite.memory.MemoryStub;
-import net.emustudio.emulib.plugins.cpu.CPU;
+import net.emustudio.emulib.plugin.cpu.CPU;
 import net.jcip.annotations.NotThreadSafe;
 
 import java.util.List;
